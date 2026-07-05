@@ -1,26 +1,32 @@
-# dependencies
-node_modules/
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
 
-# env files
+node_modules
+dist
+dist-ssr
+*.local
+
+# Environment variables
 .env
 .env.local
 .env.*.local
 
-# build output
-dist/
-build/
-
-# editor & OS
-.vscode/
-.idea/
-*.swp
-*.swo
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
 .DS_Store
-Thumbs.db
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 
-# logs
-*.log
-npm-debug.log*
-
-# supabase local
-supabase/.temp/
+# Agent files
+.agents
