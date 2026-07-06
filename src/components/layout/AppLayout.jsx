@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Outlet } from 'react-router-dom'
+import { Outlet, useLocation } from 'react-router-dom'
 import Navbar from './Navbar'
 import Sidebar from './Sidebar'
 import { Menu } from 'lucide-react'
@@ -10,6 +10,8 @@ import { Menu } from 'lucide-react'
  */
 export default function AppLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const { pathname } = useLocation()
+  const isBoardRoute = pathname.includes('/p/')
 
   return (
     <div className="h-screen flex flex-col bg-(--color-bg-primary)">
@@ -31,8 +33,8 @@ export default function AppLayout() {
       <div className="flex flex-1 overflow-hidden">
         <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        <main className="flex-1 overflow-y-auto">
-          <div className="w-full max-w-6xl mx-auto p-6 lg:p-8">
+        <main className="flex-1 overflow-y-auto flex flex-col">
+          <div className={`w-full mx-auto p-6 lg:p-8 flex-1 flex flex-col ${isBoardRoute ? 'max-w-none' : 'max-w-6xl'}`}>
             <Outlet />
           </div>
         </main>

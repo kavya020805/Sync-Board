@@ -22,6 +22,8 @@ import MembersPage from '@/pages/workspace/MembersPage'
 import ProjectListPage from '@/pages/project/ProjectListPage'
 import ProfilePage from '@/pages/settings/ProfilePage'
 
+import ProjectBoardPage from '@/pages/project/ProjectBoardPage'
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -93,7 +95,7 @@ export default function App() {
               <Route path="/w/:workspaceSlug/new-project" element={<ProjectListPage />} />
               <Route path="/w/:workspaceSlug/members" element={<MembersPage />} />
               <Route path="/w/:workspaceSlug/settings" element={<WorkspaceSettingsPage />} />
-              <Route path="/w/:workspaceSlug/p/:projectKey" element={<ProjectPlaceholder />} />
+              <Route path="/w/:workspaceSlug/p/:projectKey" element={<ProjectBoardPage />} />
               <Route path="/settings/profile" element={<ProfilePage />} />
             </Route>
 
@@ -117,20 +119,5 @@ export default function App() {
         />
       </AuthProvider>
     </QueryClientProvider>
-  )
-}
-
-/**
- * Temporary project placeholder until Sprint 2.
- */
-function ProjectPlaceholder() {
-  return (
-    <div className="flex flex-col items-center justify-center py-20 text-center animate-fade-in">
-      <div className="w-16 h-16 rounded-full bg-(--color-bg-tertiary) flex items-center justify-center mb-4">
-        <span className="text-2xl">🚧</span>
-      </div>
-      <h2 className="text-lg font-semibold text-(--color-text-primary) mb-1">Board coming in Sprint 2</h2>
-      <p className="text-sm text-(--color-text-secondary)">Kanban board and issues will be built in the next sprint.</p>
-    </div>
   )
 }
