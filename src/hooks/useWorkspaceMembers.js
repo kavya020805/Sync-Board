@@ -30,66 +30,6 @@ export function useWorkspaceMembers(workspaceId) {
   return { members: members || [], isLoading, error }
 }
 
-/**
- * useInviteMember — invite a member by email.
- */
-export function useInviteMember() {
-  const queryClient = useQueryClient()
-
-  return useMutation({
-    mutationFn: async ({ workspaceId, email, role = 'member' }) => {
-      // Check if user exists in profiles
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('id')
-        .eq('email', email)
-        .single()
-
-      if (profile) {
-        // User exists — add directly
-        const { data, error } = await supabase
-          .from('workspace_members')
-          .insert({
-            workspace_id: workspaceId,
-            user_id: profile.id,
-            role,
-            invited_email: email,
-            status: 'accepted',
-          })
-          .select()
-          .single()
-
-        if (error) {
-          if (error.code === '23505') {
-            throw new Error('This user is already a member of this workspace')
-          }
-          throw error
-        }
-        return data
-      } else {
-        // User doesn't exist — create pending invitation
-        const { data, error } = await supabase
-          .from('workspace_members')
-          .insert({
-            workspace_id: workspaceId,
-            invited_email: email,
-            role,
-            status: 'pending',
-          })
-          .select()
-          .single()
-
-        if (error) throw error
-        return data
-      }
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({
-        queryKey: ['workspace-members', variables.workspaceId],
-      })
-    },
-  })
-}
 
 /**
  * useUpdateMemberRole — change a member's role.

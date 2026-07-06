@@ -1,29 +1,41 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { X } from 'lucide-react'
-import { useCreateIssue } from '@/hooks/useBoard'
+import { useUpdateIssue } from '@/hooks/useBoard'
 import { useMilestones } from '@/hooks/useSprints'
 
-export default function CreateIssueModal({ projectId, columnId, onClose }) {
+export default function EditIssueModal({ issue, onClose }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState('medium')
   const [milestoneId, setMilestoneId] = useState('')
 
-  const { data: milestones } = useMilestones(projectId)
-  const createIssue = useCreateIssue()
+  const { data: milestones } = useMilestones(issue?.project_id)
+  const updateIssue = useUpdateIssue()
+
+  useEffect(() => {
+    if (issue) {
+      setTitle(issue.title || '')
+      setDescription(issue.description || '')
+      setPriority(issue.priority || 'medium')
+      setMilestoneId(issue.milestone_id || '')
+    }
+  }, [issue])
+
+  if (!issue) return null
 
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!title.trim()) return
 
-    createIssue.mutate(
+    updateIssue.mutate(
       {
-        project_id: projectId,
-        column_id: columnId,
-        title: title.trim(),
-        description: description.trim() || null,
-        priority,
-        milestone_id: milestoneId || null,
+        id: issue.id,
+        updates: {
+          title: title.trim(),
+          description: description.trim() || null,
+          priority,
+          milestone_id: milestoneId || null,
+        }
       },
       {
         onSuccess: () => {
@@ -34,13 +46,16 @@ export default function CreateIssueModal({ projectId, columnId, onClose }) {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-      <div className="w-full max-w-md bg-(--color-bg-primary) rounded-xl border border-(--color-border-default) shadow-xl flex flex-col overflow-hidden animate-scale-in">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4 animate-fade-in" onClick={onClose}>
+      <div 
+        className="w-full max-w-md bg-(--color-bg-primary) rounded-xl border border-(--color-border-default) shadow-xl flex flex-col overflow-hidden animate-scale-in"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex items-center justify-between p-4 border-b border-(--color-border-subtle)">
-          <h2 className="text-lg font-semibold text-(--color-text-primary)">Add New Issue</h2>
+          <h2 className="text-lg font-semibold text-(--color-text-primary)">Edit Issue</h2>
           <button
             onClick={onClose}
-            className="p-1 text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover) rounded-md transition-colors"
+            className="p-1 text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover) rounded-md transition-colors cursor-pointer"
           >
             <X size={20} />
           </button>
@@ -109,16 +124,16 @@ export default function CreateIssueModal({ projectId, columnId, onClose }) {
             <button
               type="button"
               onClick={onClose}
-              className="h-9 px-4 rounded-md text-sm font-medium text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover) transition-colors"
+              className="h-9 px-4 rounded-md text-sm font-medium text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover) transition-colors cursor-pointer"
             >
               Cancel
             </button>
             <button
               type="submit"
-              disabled={createIssue.isPending || !title.trim()}
-              className="h-9 px-4 rounded-md text-sm font-medium bg-(--color-accent) text-white hover:bg-(--color-accent-hover) transition-colors disabled:opacity-50"
+              disabled={updateIssue.isPending || !title.trim()}
+              className="h-9 px-4 rounded-md text-sm font-medium bg-(--color-accent) text-white hover:bg-(--color-accent-hover) transition-colors disabled:opacity-50 cursor-pointer"
             >
-              {createIssue.isPending ? 'Creating...' : 'Create Issue'}
+              {updateIssue.isPending ? 'Saving...' : 'Save Changes'}
             </button>
           </div>
         </form>

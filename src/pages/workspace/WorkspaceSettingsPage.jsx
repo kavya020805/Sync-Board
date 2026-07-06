@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { useWorkspace, useUpdateWorkspace, useDeleteWorkspace } from '@/hooks/useWorkspaces'
-import { useWorkspaceMembers, useInviteMember, useUpdateMemberRole, useRemoveMember } from '@/hooks/useWorkspaceMembers'
+import { useWorkspaceMembers } from '@/hooks/useWorkspaceMembers'
+import { useInviteMember, useUpdateMemberRole, useRemoveMember } from '@/hooks/useWorkspaceInvites'
 import { useAuth } from '@/hooks/useAuth'
 import { getInitials } from '@/lib/utils'
 import {

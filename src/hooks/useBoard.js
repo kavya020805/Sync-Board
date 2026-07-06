@@ -174,3 +174,22 @@ export function useMoveColumn() {
     },
   })
 }
+
+export function useAssignIssueToSprint() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: async ({ id, sprintId, position }) => {
+      const { data, error } = await supabase
+        .from('issues')
+        .update({ sprint_id: sprintId, position })
+        .eq('id', id)
+        .select()
+        .single()
+      if (error) throw error
+      return data
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['issues', data.project_id] })
+    },
+  })
+}

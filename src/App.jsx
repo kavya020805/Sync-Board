@@ -23,6 +23,9 @@ import ProjectListPage from '@/pages/project/ProjectListPage'
 import ProfilePage from '@/pages/settings/ProfilePage'
 
 import ProjectBoardPage from '@/pages/project/ProjectBoardPage'
+import BacklogPage from '@/pages/project/BacklogPage'
+import SprintDetailsPage from '@/pages/project/SprintDetailsPage'
+import ProjectMilestonesPage from '@/pages/project/ProjectMilestonesPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -34,30 +37,7 @@ const queryClient = new QueryClient({
   },
 })
 
-/**
- * HomeRedirect — redirects authenticated users to their first workspace
- * or to the create workspace page if they have none.
- */
-function HomeRedirect() {
-  const { user, loading } = useAuth()
-  const { workspaces, isLoading } = useWorkspaces()
-
-  if (loading || isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-(--color-bg-primary)">
-        <Loader2 className="w-8 h-8 text-(--color-accent) animate-spin" />
-      </div>
-    )
-  }
-
-  if (!user) return <Navigate to="/login" replace />
-
-  if (workspaces.length > 0) {
-    return <Navigate to={`/w/${workspaces[0].slug}`} replace />
-  }
-
-  return <Navigate to="/create-workspace" replace />
-}
+import GlobalDashboardPage from '@/pages/dashboard/GlobalDashboardPage'
 
 export default function App() {
   return (
@@ -90,17 +70,18 @@ export default function App() {
                 </ProtectedRoute>
               }
             >
+              <Route path="/" element={<GlobalDashboardPage />} />
               <Route path="/w/:workspaceSlug" element={<DashboardPage />} />
               <Route path="/w/:workspaceSlug/projects" element={<ProjectListPage />} />
               <Route path="/w/:workspaceSlug/new-project" element={<ProjectListPage />} />
               <Route path="/w/:workspaceSlug/members" element={<MembersPage />} />
               <Route path="/w/:workspaceSlug/settings" element={<WorkspaceSettingsPage />} />
               <Route path="/w/:workspaceSlug/p/:projectKey" element={<ProjectBoardPage />} />
+              <Route path="/w/:workspaceSlug/p/:projectKey/backlog" element={<BacklogPage />} />
+              <Route path="/w/:workspaceSlug/p/:projectKey/milestones" element={<ProjectMilestonesPage />} />
+              <Route path="/w/:workspaceSlug/p/:projectKey/charts" element={<SprintDetailsPage />} />
               <Route path="/settings/profile" element={<ProfilePage />} />
             </Route>
-
-            {/* Home redirect */}
-            <Route path="/" element={<HomeRedirect />} />
 
             {/* Catch all */}
             <Route path="*" element={<Navigate to="/" replace />} />

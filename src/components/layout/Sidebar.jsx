@@ -150,16 +150,46 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
 
             {projects?.length > 0 ? (
-              projects.map((project) => (
-                <NavLink
-                  key={project.id}
-                  to={`/w/${workspaceSlug}/p/${project.key.toLowerCase()}`}
-                  className={navLinkClass}
-                >
-                  <Hash className="w-4 h-4" />
-                  <span className="truncate">{project.name}</span>
-                </NavLink>
-              ))
+              projects.map((project) => {
+                const projectBasePath = `/w/${workspaceSlug}/p/${project.key.toLowerCase()}`
+                const isProjectActive = window.location.pathname.startsWith(projectBasePath)
+                
+                return (
+                  <div key={project.id} className="flex flex-col gap-0.5">
+                    <NavLink
+                      to={projectBasePath}
+                      end
+                      className={navLinkClass}
+                    >
+                      <Hash className="w-4 h-4" />
+                      <span className="truncate">{project.name}</span>
+                    </NavLink>
+                    
+                    {isProjectActive && (
+                      <div className="flex flex-col gap-0.5 ml-6 mt-1 border-l border-(--color-border-subtle) pl-2">
+                        <NavLink
+                          to={`${projectBasePath}/backlog`}
+                          className={({ isActive }) => `text-xs py-1.5 px-2 rounded-md transition-colors ${isActive ? 'text-(--color-text-primary) font-medium bg-(--color-bg-hover)' : 'text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover)'}`}
+                        >
+                          Backlog
+                        </NavLink>
+                        <NavLink
+                          to={`${projectBasePath}/milestones`}
+                          className={({ isActive }) => `text-xs py-1.5 px-2 rounded-md transition-colors ${isActive ? 'text-(--color-text-primary) font-medium bg-(--color-bg-hover)' : 'text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover)'}`}
+                        >
+                          Milestones
+                        </NavLink>
+                        <NavLink
+                          to={`${projectBasePath}/charts`}
+                          className={({ isActive }) => `text-xs py-1.5 px-2 rounded-md transition-colors ${isActive ? 'text-(--color-text-primary) font-medium bg-(--color-bg-hover)' : 'text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover)'}`}
+                        >
+                          Reports
+                        </NavLink>
+                      </div>
+                    )}
+                  </div>
+                )
+              })
             ) : (
               <p className="px-3 py-4 text-xs text-(--color-text-tertiary) text-center">
                 No projects yet
