@@ -5,6 +5,7 @@ import { Sun, Moon, Bell, LogOut, User, ChevronDown } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import NotificationsDropdown from './NotificationsDropdown'
 
 export default function Navbar() {
   const { profile, signOut } = useAuth()
@@ -62,13 +63,8 @@ export default function Navbar() {
           {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
         </button>
 
-        {/* Notifications placeholder */}
-        <button
-          className="w-9 h-9 rounded-md flex items-center justify-center text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover) transition-all duration-200 cursor-pointer relative"
-          title="Notifications"
-        >
-          <Bell className="w-4 h-4" />
-        </button>
+        {/* Notifications Dropdown */}
+        <NotificationsDropdown />
 
         {/* User menu */}
         <div className="relative ml-1" ref={userMenuRef}>

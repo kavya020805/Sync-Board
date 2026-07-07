@@ -11,7 +11,7 @@ export default function ProjectMilestonesPage() {
   const { workspaceSlug, projectKey } = useParams()
   
   const { workspaces } = useWorkspaces()
-  const workspace = workspaces.find((w) => w.slug === workspaceSlug)
+  const workspace = workspaces?.find((w) => w.slug === workspaceSlug)
   
   const { project, isLoading: projectLoading } = useProject(workspace?.id, projectKey)
   

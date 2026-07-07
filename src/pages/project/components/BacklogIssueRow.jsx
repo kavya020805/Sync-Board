@@ -4,6 +4,7 @@ import { MoreHorizontal, Edit2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useDeleteIssue } from '@/hooks/useBoard'
 import EditIssueModal from './EditIssueModal'
+import { useSearchParams } from 'react-router-dom'
 
 const priorityColors = {
   low: 'bg-(--color-success-muted) text-(--color-success)',
@@ -14,9 +15,18 @@ const priorityColors = {
 export default function BacklogIssueRow({ issue, index }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [searchParams, setSearchParams] = useSearchParams()
   
   const menuRef = useRef(null)
   const deleteIssue = useDeleteIssue()
+
+  useEffect(() => {
+    if (searchParams.get('issueId') === issue.id && !isEditModalOpen) {
+      setIsEditModalOpen(true)
+      searchParams.delete('issueId')
+      setSearchParams(searchParams, { replace: true })
+    }
+  }, [searchParams, issue.id, isEditModalOpen, setSearchParams])
 
   // Handle clicking outside the menu to close it
   useEffect(() => {
@@ -55,6 +65,7 @@ export default function BacklogIssueRow({ issue, index }) {
             ref={provided.innerRef}
             {...provided.draggableProps}
             {...provided.dragHandleProps}
+            onClick={() => setIsEditModalOpen(true)}
             className={`
               flex items-center justify-between p-3 border-b border-(--color-border-subtle) bg-(--color-bg-primary)
               transition-all duration-200 cursor-pointer relative group

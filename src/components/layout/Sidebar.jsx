@@ -185,6 +185,12 @@ export default function Sidebar({ isOpen, onClose }) {
                         >
                           Reports
                         </NavLink>
+                        <NavLink
+                          to={`${projectBasePath}/settings`}
+                          className={({ isActive }) => `text-xs py-1.5 px-2 rounded-md transition-colors flex items-center gap-1.5 ${isActive ? 'text-(--color-text-primary) font-medium bg-(--color-bg-hover)' : 'text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover)'}`}
+                        >
+                          <Settings className="w-3.5 h-3.5" /> Settings
+                        </NavLink>
                       </div>
                     )}
                   </div>

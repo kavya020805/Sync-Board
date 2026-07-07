@@ -30,3 +30,6 @@ dist-ssr
 
 # Agent files
 .agents
+
+# Supabase
+supabase/.temp/

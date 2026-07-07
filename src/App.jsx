@@ -26,6 +26,7 @@ import ProjectBoardPage from '@/pages/project/ProjectBoardPage'
 import BacklogPage from '@/pages/project/BacklogPage'
 import SprintDetailsPage from '@/pages/project/SprintDetailsPage'
 import ProjectMilestonesPage from '@/pages/project/ProjectMilestonesPage'
+import ProjectSettingsPage from '@/pages/project/ProjectSettingsPage'
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -80,6 +81,7 @@ export default function App() {
               <Route path="/w/:workspaceSlug/p/:projectKey/backlog" element={<BacklogPage />} />
               <Route path="/w/:workspaceSlug/p/:projectKey/milestones" element={<ProjectMilestonesPage />} />
               <Route path="/w/:workspaceSlug/p/:projectKey/charts" element={<SprintDetailsPage />} />
+              <Route path="/w/:workspaceSlug/p/:projectKey/settings" element={<ProjectSettingsPage />} />
               <Route path="/settings/profile" element={<ProfilePage />} />
             </Route>
 

@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react'
-import { useParams } from 'react-router-dom'
+import { useParams, Link } from 'react-router-dom'
 import { DragDropContext } from '@hello-pangea/dnd'
 import { Loader2, Filter, CheckCircle2, PartyPopper } from 'lucide-react'
 import { toast } from 'sonner'
@@ -25,7 +25,7 @@ export default function ProjectBoardPage() {
   
   // 1. Get workspace ID
   const { workspaces } = useWorkspaces()
-  const workspace = workspaces.find((w) => w.slug === workspaceSlug)
+  const workspace = workspaces?.find((w) => w.slug === workspaceSlug)
   
   // 2. Get project ID
   const { project, isLoading: projectLoading } = useProject(workspace?.id, projectKey)
@@ -262,17 +262,12 @@ export default function ProjectBoardPage() {
               Go to your Backlog to plan and start a sprint!
             </p>
             <div className="flex items-center gap-3">
-              {columns.length > 0 && (
-                <button
-                  onClick={() => {
-                    const firstColumn = [...columns].sort((a, b) => a.position - b.position)[0]
-                    setAddingIssueToColumn(firstColumn.id)
-                  }}
-                  className="px-4 py-2 bg-(--color-accent) hover:bg-(--color-accent-hover) text-white text-sm font-medium rounded-md shadow-sm transition-colors cursor-pointer"
-                >
-                  Create Issue
-                </button>
-              )}
+              <Link 
+                to={`/w/${workspaceSlug}/p/${projectKey}/backlog`}
+                className="px-4 py-2 bg-(--color-accent) hover:bg-(--color-accent-hover) text-white text-sm font-medium rounded-md shadow-sm transition-colors cursor-pointer"
+              >
+                Go to Backlog
+              </Link>
             </div>
           </div>
         ) : (

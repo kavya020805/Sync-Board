@@ -23,7 +23,7 @@ export default function SprintDetailsPage() {
   const { workspaceSlug, projectKey } = useParams()
   
   const { workspaces } = useWorkspaces()
-  const workspace = workspaces.find((w) => w.slug === workspaceSlug)
+  const workspace = workspaces?.find((w) => w.slug === workspaceSlug)
   
   const { project, isLoading: projectLoading } = useProject(workspace?.id, projectKey)
   const { data: sprints, isLoading: sprintsLoading } = useSprints(project?.id)
