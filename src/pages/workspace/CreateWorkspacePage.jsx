@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCreateWorkspace } from '@/hooks/useWorkspaces'
 import { slugify } from '@/lib/utils'
-import { Loader2, ArrowRight, Building2 } from 'lucide-react'
+import { Loader2, ArrowRight, Building2, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function CreateWorkspacePage() {
@@ -59,9 +59,19 @@ export default function CreateWorkspacePage() {
           <Building2 className="w-7 h-7 text-(--color-accent)" />
         </div>
 
-        <h1 className="text-2xl font-bold text-(--color-text-primary) mb-1.5">
-          Create a workspace
-        </h1>
+        <div className="flex items-center justify-between mb-1.5">
+          <h1 className="text-2xl font-bold text-(--color-text-primary)">
+            Create a workspace
+          </h1>
+          <button
+            onClick={() => navigate(-1)}
+            className="p-1.5 rounded-md text-(--color-text-tertiary) hover:text-(--color-error) hover:bg-(--color-error-muted) transition-colors cursor-pointer"
+            title="Go back"
+            type="button"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
         <p className="text-sm text-(--color-text-secondary) mb-8">
           Workspaces are shared environments where teams manage projects together.
         </p>

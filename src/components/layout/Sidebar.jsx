@@ -12,6 +12,7 @@ import {
   Hash,
   Menu,
   X,
+  Activity,
 } from 'lucide-react'
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -73,7 +74,7 @@ export default function Sidebar({ isOpen, onClose }) {
         <div className="px-3 pt-3 pb-2" ref={selectorRef}>
           <button
             onClick={() => setWorkspaceSelectorOpen(!workspaceSelectorOpen)}
-            className="flex items-center justify-between w-full px-2.5 py-2 rounded-md hover:bg-(--color-bg-hover) transition-colors cursor-pointer"
+            className="tour-workspace-switcher flex items-center justify-between w-full px-2.5 py-2 rounded-md hover:bg-(--color-bg-hover) transition-colors cursor-pointer"
           >
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-7 h-7 rounded-md bg-(--color-accent-muted) text-(--color-accent) flex items-center justify-center text-xs font-bold shrink-0">
@@ -128,9 +129,13 @@ export default function Sidebar({ isOpen, onClose }) {
         {/* Navigation */}
         {currentWorkspace && (
           <nav className="flex-1 px-3 py-2 flex flex-col gap-0.5 overflow-y-auto">
-            <NavLink to={`/w/${workspaceSlug}`} end className={navLinkClass}>
+            <NavLink to={`/w/${workspaceSlug}`} end className={({ isActive }) => `tour-dashboard-nav ${navLinkClass({ isActive })}`}>
               <LayoutDashboard className="w-4 h-4" />
               Dashboard
+            </NavLink>
+            <NavLink to={`/w/${workspaceSlug}/analytics`} className={({ isActive }) => `tour-analytics-nav ${navLinkClass({ isActive })}`}>
+              <Activity className="w-4 h-4" />
+              Analytics
             </NavLink>
 
             {/* Projects section */}
@@ -141,7 +146,7 @@ export default function Sidebar({ isOpen, onClose }) {
                 </span>
                 <button
                   onClick={() => navigate(`/w/${workspaceSlug}/new-project`)}
-                  className="w-5 h-5 rounded flex items-center justify-center text-(--color-text-tertiary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover) transition-colors cursor-pointer"
+                  className="tour-create-project w-5 h-5 rounded flex items-center justify-center text-(--color-text-tertiary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover) transition-colors cursor-pointer"
                   title="Create project"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -167,6 +172,12 @@ export default function Sidebar({ isOpen, onClose }) {
                     
                     {isProjectActive && (
                       <div className="flex flex-col gap-0.5 ml-6 mt-1 border-l border-(--color-border-subtle) pl-2">
+                        <NavLink
+                          to={`${projectBasePath}/board`}
+                          className={({ isActive }) => `text-xs py-1.5 px-2 rounded-md transition-colors ${isActive ? 'text-(--color-text-primary) font-medium bg-(--color-bg-hover)' : 'text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover)'}`}
+                        >
+                          Board
+                        </NavLink>
                         <NavLink
                           to={`${projectBasePath}/backlog`}
                           className={({ isActive }) => `text-xs py-1.5 px-2 rounded-md transition-colors ${isActive ? 'text-(--color-text-primary) font-medium bg-(--color-bg-hover)' : 'text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover)'}`}

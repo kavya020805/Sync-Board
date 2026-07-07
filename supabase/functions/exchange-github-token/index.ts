@@ -1,4 +1,5 @@
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.39.3'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,16 +12,29 @@ serve(async (req) => {
   }
 
   try {
+    const authHeader = req.headers.get('Authorization')
+    if (!authHeader) throw new Error('Missing Authorization header')
+
     const { code } = await req.json()
-    // The client id could be sent from the frontend or stored in secrets
-    // We'll read it from env for security
     const clientId = Deno.env.get('GITHUB_CLIENT_ID')
     const clientSecret = Deno.env.get('GITHUB_CLIENT_SECRET')
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')
 
     if (!code) throw new Error('No code provided')
-    if (!clientId || !clientSecret) {
-      throw new Error('Missing GITHUB_CLIENT_ID or GITHUB_CLIENT_SECRET in Supabase Secrets')
+    if (!clientId || !clientSecret || !supabaseUrl || !supabaseAnonKey) {
+      throw new Error('Missing environment variables')
     }
+
+    // Initialize Supabase client with the user's auth header to run as them
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    })
+
+    // Get user from token by explicitly passing the JWT
+    const jwt = authHeader.replace('Bearer ', '')
+    const { data: { user }, error: authError } = await supabase.auth.getUser(jwt)
+    if (authError || !user) throw new Error(`Unauthorized: ${authError?.message || 'No user found'}`)
 
     // 1. Exchange code for token
     const tokenResponse = await fetch('https://github.com/login/oauth/access_token', {
@@ -43,7 +57,16 @@ serve(async (req) => {
 
     const accessToken = tokenData.access_token
 
-    // 2. Fetch the user's repositories
+    // 2. Save the token securely in the database
+    const { error: dbError } = await supabase.from('user_github_tokens').upsert({
+      user_id: user.id,
+      access_token: accessToken,
+      updated_at: new Date().toISOString()
+    })
+    
+    if (dbError) throw new Error(`Failed to save token: ${dbError.message}`)
+
+    // 3. Fetch the user's repositories
     const reposResponse = await fetch('https://api.github.com/user/repos?sort=updated&per_page=100', {
       headers: {
         Authorization: `Bearer ${accessToken}`,
@@ -64,9 +87,10 @@ serve(async (req) => {
       status: 200,
     })
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
+    console.error('Edge Function Error:', error)
+    return new Response(JSON.stringify({ error: error.message, stack: error.stack }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      status: 400,
+      status: 200,
     })
   }
 })

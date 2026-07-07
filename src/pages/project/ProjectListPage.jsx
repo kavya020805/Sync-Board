@@ -1,8 +1,8 @@
-import { useParams, useNavigate, Link } from 'react-router-dom'
+import { useParams, useNavigate, Link, useLocation } from 'react-router-dom'
 import { useWorkspace } from '@/hooks/useWorkspaces'
 import { useProjects, useCreateProject } from '@/hooks/useProjects'
-import { FolderKanban, Plus, Loader2, Hash, ArrowRight } from 'lucide-react'
-import { useState } from 'react'
+import { FolderKanban, Plus, Loader2, Hash, ArrowRight, X } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { toast } from 'sonner'
 
 export default function ProjectListPage() {
@@ -11,8 +11,15 @@ export default function ProjectListPage() {
   const { projects, isLoading } = useProjects(workspace?.id)
   const createProject = useCreateProject()
   const navigate = useNavigate()
+  const location = useLocation()
 
   const [showCreate, setShowCreate] = useState(false)
+
+  useEffect(() => {
+    if (location.pathname.endsWith('/new-project')) {
+      setShowCreate(true)
+    }
+  }, [location.pathname])
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [key, setKey] = useState('')
@@ -80,9 +87,24 @@ export default function ProjectListPage() {
       {showCreate && (
         <form
           onSubmit={handleSubmit}
-          className="mb-6 p-5 rounded-md border border-(--color-border-default) bg-(--color-bg-secondary) animate-slide-down"
+          className="mb-6 p-5 rounded-md border border-(--color-border-default) bg-(--color-bg-secondary) animate-slide-down relative"
         >
-          <h3 className="text-sm font-semibold text-(--color-text-primary) mb-4">Create a new project</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-sm font-semibold text-(--color-text-primary)">Create a new project</h3>
+            <button
+              type="button"
+              onClick={() => {
+                setShowCreate(false)
+                if (location.pathname.endsWith('/new-project')) {
+                  navigate(`/w/${workspaceSlug}/projects`, { replace: true })
+                }
+              }}
+              className="p-1 rounded-md text-(--color-text-tertiary) hover:text-(--color-error) hover:bg-(--color-error-muted) transition-colors cursor-pointer"
+              title="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
 
           <div className="flex flex-col gap-4">
             <div className="flex gap-3">

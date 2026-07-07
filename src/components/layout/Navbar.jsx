@@ -57,7 +57,7 @@ export default function Navbar() {
         {/* Theme toggle */}
         <button
           onClick={toggleTheme}
-          className="w-9 h-9 rounded-md flex items-center justify-center text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover) transition-all duration-200 cursor-pointer"
+          className="tour-theme-toggle w-9 h-9 rounded-md flex items-center justify-center text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover) transition-all duration-200 cursor-pointer"
           title={theme === 'dark' ? 'Switch to light mode' : 'Switch to dark mode'}
         >
           {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
@@ -70,7 +70,7 @@ export default function Navbar() {
         <div className="relative ml-1" ref={userMenuRef}>
           <button
             onClick={() => setUserMenuOpen(!userMenuOpen)}
-            className="flex items-center gap-2 h-9 pl-1 pr-2 rounded-md hover:bg-(--color-bg-hover) transition-all duration-200 cursor-pointer"
+            className="tour-profile-menu flex items-center gap-2 h-9 pl-1 pr-2 rounded-md hover:bg-(--color-bg-hover) transition-all duration-200 cursor-pointer"
           >
             {profile?.avatar_url ? (
               <img

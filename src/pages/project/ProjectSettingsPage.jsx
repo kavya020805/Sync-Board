@@ -38,6 +38,7 @@ export default function ProjectSettingsPage() {
       })
 
       if (error) throw error
+      if (data?.error) throw new Error(data.error)
 
       if (data?.repos) {
         setRepos(data.repos)
@@ -45,7 +46,7 @@ export default function ProjectSettingsPage() {
       }
     } catch (err) {
       console.error(err)
-      toast.error('Failed to authenticate with GitHub. Did you set the Client Secret in Supabase?')
+      toast.error(err?.message || err?.error || 'Failed to authenticate with GitHub')
     } finally {
       setIsLinking(false)
       // Clean up URL
@@ -60,8 +61,11 @@ export default function ProjectSettingsPage() {
       return
     }
     
-    // Redirect to GitHub OAuth
-    const redirectUri = window.location.origin + `/w/${workspaceSlug}/p/${projectKey}/settings`
+    // Save the current URL to return to it after authentication
+    localStorage.setItem('github_auth_return_url', window.location.pathname)
+    
+    // Redirect to GitHub OAuth using a static callback URL
+    const redirectUri = window.location.origin + '/github/callback'
     window.location.href = `https://github.com/login/oauth/authorize?client_id=${clientId}&redirect_uri=${redirectUri}&scope=repo`
   }
 

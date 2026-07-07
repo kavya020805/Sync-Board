@@ -55,7 +55,7 @@ export default function DashboardPage() {
         </div>
         <button 
           onClick={() => navigate(`/w/${workspaceSlug}/new-project`)}
-          className="h-10 px-4 flex items-center gap-2 bg-(--color-accent) hover:bg-(--color-accent-hover) text-(--color-accent-text) text-sm font-medium rounded-md shadow-sm transition-all cursor-pointer"
+          className="h-10 px-4 flex items-center gap-2 bg-(--color-accent) hover:bg-(--color-accent-hover) text-white text-sm font-medium rounded-md shadow-sm transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           New Project

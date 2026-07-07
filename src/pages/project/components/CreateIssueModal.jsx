@@ -2,19 +2,69 @@ import React, { useState } from 'react'
 import { X } from 'lucide-react'
 import { useCreateIssue } from '@/hooks/useBoard'
 import { useMilestones } from '@/hooks/useSprints'
+import { useGithubToken, useCreateGithubIssue } from '@/hooks/useGithub'
+import { GitPullRequest, Loader2 } from 'lucide-react'
+import { useParams } from 'react-router-dom'
+import { useWorkspaces } from '@/hooks/useWorkspaces'
 
 export default function CreateIssueModal({ projectId, columnId, onClose }) {
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState('medium')
   const [milestoneId, setMilestoneId] = useState('')
+  const [storyPoints, setStoryPoints] = useState('')
+  const [dueDate, setDueDate] = useState('')
 
+  const { workspaceSlug, projectKey } = useParams()
+  const { workspaces } = useWorkspaces()
+  const workspace = workspaces?.find(w => w.slug === workspaceSlug)
+  
+  // Use useProject from hooks/useProjects.js, but since it's missing here, we'll fetch project directly or pass it down
+  // Wait, I can just use the supabase client to fetch it quickly or I can use the useProject hook
   const { data: milestones } = useMilestones(projectId)
   const createIssue = useCreateIssue()
+  
+  // Need to import useProject from correct path
+  const [syncToGithub, setSyncToGithub] = useState(true)
+  const { data: githubToken } = useGithubToken()
+  const createGithubIssue = useCreateGithubIssue()
+  
+  // Fetch project details to check for linked repo
+  const [project, setProject] = useState(null)
+  React.useEffect(() => {
+    const fetchProject = async () => {
+      const { supabase } = await import('@/lib/supabase')
+      const { data } = await supabase.from('projects').select('*').eq('id', projectId).single()
+      setProject(data)
+    }
+    fetchProject()
+  }, [projectId])
 
-  const handleSubmit = (e) => {
+  const isGithubLinked = !!(project?.github_repo_owner && project?.github_repo_name && githubToken)
+
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!title.trim()) return
+
+    let githubIssueNumber = null
+    let githubIssueUrl = null
+    
+    // Create in GitHub first if requested
+    if (isGithubLinked && syncToGithub) {
+      try {
+        const ghIssue = await createGithubIssue.mutateAsync({
+          owner: project.github_repo_owner,
+          repo: project.github_repo_name,
+          title: title.trim(),
+          body: description.trim() || undefined
+        })
+        githubIssueNumber = ghIssue.number
+        githubIssueUrl = ghIssue.html_url
+      } catch (error) {
+        console.error('Failed to create GitHub issue:', error)
+        // We'll continue and just create the Supabase issue
+      }
+    }
 
     createIssue.mutate(
       {
@@ -24,6 +74,10 @@ export default function CreateIssueModal({ projectId, columnId, onClose }) {
         description: description.trim() || null,
         priority,
         milestone_id: milestoneId || null,
+        story_points: storyPoints ? parseInt(storyPoints, 10) : null,
+        due_date: dueDate ? new Date(dueDate).toISOString() : null,
+        github_issue_number: githubIssueNumber,
+        github_issue_url: githubIssueUrl
       },
       {
         onSuccess: () => {
@@ -105,6 +159,49 @@ export default function CreateIssueModal({ projectId, columnId, onClose }) {
             </select>
           </div>
 
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-(--color-text-secondary) mb-1.5">
+                Story Points (Optional)
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={storyPoints}
+                onChange={(e) => setStoryPoints(e.target.value)}
+                placeholder="E.g. 5"
+                className="w-full h-10 px-3 rounded-md border border-(--color-border-default) bg-(--color-bg-secondary) text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-accent) focus:ring-1 focus:ring-(--color-accent)"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-(--color-text-secondary) mb-1.5">
+                Due Date (Optional)
+              </label>
+              <input
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                className="w-full h-10 px-3 rounded-md border border-(--color-border-default) bg-(--color-bg-secondary) text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-accent) focus:ring-1 focus:ring-(--color-accent)"
+              />
+            </div>
+          </div>
+
+          {isGithubLinked && (
+            <div className="flex items-center gap-2 mt-2 p-3 rounded-md bg-[#24292e]/5 border border-[#24292e]/10">
+              <input
+                type="checkbox"
+                id="sync-github"
+                checked={syncToGithub}
+                onChange={(e) => setSyncToGithub(e.target.checked)}
+                className="w-4 h-4 rounded border-(--color-border-default) text-[#24292e] focus:ring-[#24292e]"
+              />
+              <label htmlFor="sync-github" className="flex items-center gap-2 text-sm text-(--color-text-primary) cursor-pointer select-none">
+                <GitPullRequest className="w-4 h-4 text-[#24292e]" />
+                Also create this issue in <strong>{project.github_repo_owner}/{project.github_repo_name}</strong>
+              </label>
+            </div>
+          )}
+
           <div className="flex justify-end gap-3 mt-4">
             <button
               type="button"
@@ -115,10 +212,11 @@ export default function CreateIssueModal({ projectId, columnId, onClose }) {
             </button>
             <button
               type="submit"
-              disabled={createIssue.isPending || !title.trim()}
-              className="h-9 px-4 rounded-md text-sm font-medium bg-(--color-accent) text-white hover:bg-(--color-accent-hover) transition-colors disabled:opacity-50"
+              disabled={createIssue.isPending || createGithubIssue.isPending || !title.trim()}
+              className="flex items-center gap-2 h-9 px-4 rounded-md text-sm font-medium bg-(--color-accent) text-white hover:bg-(--color-accent-hover) transition-colors disabled:opacity-50 cursor-pointer"
             >
-              {createIssue.isPending ? 'Creating...' : 'Create Issue'}
+              {(createIssue.isPending || createGithubIssue.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              {(createIssue.isPending || createGithubIssue.isPending) ? 'Creating...' : 'Create Issue'}
             </button>
           </div>
         </form>

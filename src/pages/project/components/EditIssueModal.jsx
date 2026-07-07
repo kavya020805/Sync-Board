@@ -4,12 +4,14 @@ import { useUpdateIssue } from '@/hooks/useBoard'
 import { useMilestones } from '@/hooks/useSprints'
 import IssueActivityFeed from './IssueActivityFeed'
 import IssueComments from './IssueComments'
-import { Activity, MessageSquare, Info, GitPullRequest } from 'lucide-react'
+import { Activity, MessageSquare, Info, GitPullRequest, Loader2 } from 'lucide-react'
 import { usePullRequests } from '@/hooks/usePullRequests'
 
 import { useParams } from 'react-router-dom'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { useWorkspaceMembers } from '@/hooks/useWorkspaceMembers'
+import { useGithubToken, useCreateBranch, useUpdateGithubIssue } from '@/hooks/useGithub'
+import { toast } from 'sonner'
 
 export default function EditIssueModal({ issue, onClose }) {
   const { workspaceSlug } = useParams()
@@ -22,11 +24,31 @@ export default function EditIssueModal({ issue, onClose }) {
   const [priority, setPriority] = useState('medium')
   const [milestoneId, setMilestoneId] = useState('')
   const [assigneeId, setAssigneeId] = useState('')
+  const [storyPoints, setStoryPoints] = useState('')
+  const [dueDate, setDueDate] = useState('')
   const [activeTab, setActiveTab] = useState('details')
 
   const { data: milestones } = useMilestones(issue?.project_id)
   const { data: pullRequests } = usePullRequests(issue?.id)
   const updateIssue = useUpdateIssue()
+
+  // GitHub Hooks
+  const { data: githubToken } = useGithubToken()
+  const createBranch = useCreateBranch()
+  const updateGithubIssue = useUpdateGithubIssue()
+
+  const [project, setProject] = useState(null)
+  useEffect(() => {
+    const fetchProject = async () => {
+      if (!issue?.project_id) return
+      const { supabase } = await import('@/lib/supabase')
+      const { data } = await supabase.from('projects').select('*').eq('id', issue.project_id).single()
+      setProject(data)
+    }
+    fetchProject()
+  }, [issue?.project_id])
+
+  const isGithubLinked = !!(project?.github_repo_owner && project?.github_repo_name && githubToken)
 
   useEffect(() => {
     if (issue) {
@@ -35,6 +57,8 @@ export default function EditIssueModal({ issue, onClose }) {
       setPriority(issue.priority || 'medium')
       setMilestoneId(issue.milestone_id || '')
       setAssigneeId(issue.assignee_id || '')
+      setStoryPoints(issue.story_points !== null ? String(issue.story_points) : '')
+      setDueDate(issue.due_date ? issue.due_date.split('T')[0] : '')
     }
   }, [issue])
 
@@ -53,14 +77,62 @@ export default function EditIssueModal({ issue, onClose }) {
           priority,
           milestone_id: milestoneId || null,
           assignee_id: assigneeId || null,
+          story_points: storyPoints ? parseInt(storyPoints, 10) : null,
+          due_date: dueDate ? new Date(dueDate).toISOString() : null,
         }
       },
       {
-        onSuccess: () => {
+        onSuccess: async () => {
+          if (isGithubLinked && issue.github_issue_number) {
+            try {
+              await updateGithubIssue.mutateAsync({
+                owner: project.github_repo_owner,
+                repo: project.github_repo_name,
+                issueNumber: issue.github_issue_number,
+                title: title.trim(),
+                body: description.trim() || undefined
+              })
+            } catch (err) {
+              console.error('Failed to update GitHub Issue:', err)
+              toast.error('Local changes saved, but failed to sync to GitHub.')
+            }
+          }
           onClose()
         },
       }
     )
+  }
+
+  const handleCreateBranch = async () => {
+    if (!isGithubLinked) return
+    const branchName = `sb-${issue.id}`
+    try {
+      await createBranch.mutateAsync({
+        owner: project.github_repo_owner,
+        repo: project.github_repo_name,
+        branchName
+      })
+      toast.success('Branch created successfully on GitHub!')
+    } catch (error) {
+      toast.error(error.message || 'Failed to create branch')
+    }
+  }
+
+  const handleCreatePR = async () => {
+    if (!isGithubLinked) return
+    const branchName = `sb-${issue.id}`
+    try {
+      await createPR.mutateAsync({
+        owner: project.github_repo_owner,
+        repo: project.github_repo_name,
+        title: issue.title,
+        body: `Resolves #${issue.github_issue_number || issue.id}\n\n${issue.description || ''}`,
+        head: branchName
+      })
+      toast.success('Pull Request created successfully!')
+    } catch (error) {
+      toast.error(error.message || 'Failed to create Pull Request. Make sure you have pushed commits to the branch first.')
+    }
   }
 
   return (
@@ -70,10 +142,27 @@ export default function EditIssueModal({ issue, onClose }) {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between p-4 border-b border-(--color-border-subtle) shrink-0">
-          <h2 className="text-lg font-semibold text-(--color-text-primary)">{issue.title}</h2>
+          <div className="flex flex-col gap-1">
+            <h2 className="text-lg font-semibold text-(--color-text-primary)">{issue.title}</h2>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono text-(--color-text-tertiary) bg-(--color-bg-secondary) px-2 py-0.5 rounded border border-(--color-border-default)">
+                sb-{issue.id}
+              </span>
+              <button 
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigator.clipboard.writeText(`sb-${issue.id}`)
+                  toast.success('Branch name copied to clipboard!')
+                }}
+                className="text-[10px] text-(--color-accent) hover:underline cursor-pointer"
+              >
+                Copy Branch Name
+              </button>
+            </div>
+          </div>
           <button
             onClick={onClose}
-            className="p-1 text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover) rounded-md transition-colors cursor-pointer"
+            className="p-1 text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover) rounded-md transition-colors cursor-pointer self-start"
           >
             <X size={20} />
           </button>
@@ -225,6 +314,26 @@ export default function EditIssueModal({ issue, onClose }) {
                     </div>
                   </div>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'details' && isGithubLinked && issue.sprint_id && issue.column_id && (
+            <div className="mt-6 flex flex-col gap-3 border-t border-(--color-border-subtle) pt-6">
+              <h3 className="text-sm font-semibold text-(--color-text-primary) flex items-center gap-2">
+                <GitPullRequest className="w-4 h-4 text-[#24292e]" />
+                GitHub Actions
+              </h3>
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={handleCreateBranch}
+                  disabled={createBranch.isPending}
+                  className="w-full h-9 px-4 rounded-md text-sm font-medium bg-(--color-bg-secondary) border border-(--color-border-default) text-(--color-text-primary) hover:bg-(--color-bg-hover) transition-colors disabled:opacity-50 flex items-center justify-center gap-2 cursor-pointer"
+                >
+                  {createBranch.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <GitPullRequest className="w-4 h-4" />}
+                  Create Branch
+                </button>
               </div>
             </div>
           )}

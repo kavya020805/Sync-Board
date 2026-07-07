@@ -58,7 +58,7 @@ export default function MembersPage() {
         {canManageMembers && (
           <button
             onClick={() => setIsInviteModalOpen(true)}
-            className="h-9 px-4 flex items-center gap-2 bg-(--color-accent) hover:bg-(--color-accent-hover) text-(--color-accent-text) text-sm font-medium rounded-md shadow-sm transition-all"
+            className="h-9 px-4 flex items-center gap-2 bg-(--color-accent) hover:bg-(--color-accent-hover) text-white text-sm font-medium rounded-md shadow-sm transition-all"
           >
             <UserPlus className="w-4 h-4" />
             Invite Member

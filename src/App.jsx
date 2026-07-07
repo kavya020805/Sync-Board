@@ -11,6 +11,7 @@ import SignUpPage from '@/pages/auth/SignUpPage'
 import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage'
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
 import AuthCallbackPage from '@/pages/auth/AuthCallbackPage'
+import GithubCallbackPage from '@/pages/auth/GithubCallbackPage'
 
 // Protected pages
 import AppLayout from '@/components/layout/AppLayout'
@@ -19,9 +20,11 @@ import DashboardPage from '@/pages/dashboard/DashboardPage'
 import CreateWorkspacePage from '@/pages/workspace/CreateWorkspacePage'
 import WorkspaceSettingsPage from '@/pages/workspace/WorkspaceSettingsPage'
 import MembersPage from '@/pages/workspace/MembersPage'
+import WorkspaceAnalyticsPage from '@/pages/workspace/WorkspaceAnalyticsPage'
 import ProjectListPage from '@/pages/project/ProjectListPage'
 import ProfilePage from '@/pages/settings/ProfilePage'
 
+import ProjectDashboardPage from '@/pages/project/ProjectDashboardPage'
 import ProjectBoardPage from '@/pages/project/ProjectBoardPage'
 import BacklogPage from '@/pages/project/BacklogPage'
 import SprintDetailsPage from '@/pages/project/SprintDetailsPage'
@@ -52,6 +55,7 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
             <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
+            <Route path="/github/callback" element={<GithubCallbackPage />} />
 
             {/* Create workspace (no sidebar) */}
             <Route
@@ -76,8 +80,10 @@ export default function App() {
               <Route path="/w/:workspaceSlug/projects" element={<ProjectListPage />} />
               <Route path="/w/:workspaceSlug/new-project" element={<ProjectListPage />} />
               <Route path="/w/:workspaceSlug/members" element={<MembersPage />} />
+              <Route path="/w/:workspaceSlug/analytics" element={<WorkspaceAnalyticsPage />} />
               <Route path="/w/:workspaceSlug/settings" element={<WorkspaceSettingsPage />} />
-              <Route path="/w/:workspaceSlug/p/:projectKey" element={<ProjectBoardPage />} />
+              <Route path="/w/:workspaceSlug/p/:projectKey" element={<ProjectDashboardPage />} />
+              <Route path="/w/:workspaceSlug/p/:projectKey/board" element={<ProjectBoardPage />} />
               <Route path="/w/:workspaceSlug/p/:projectKey/backlog" element={<BacklogPage />} />
               <Route path="/w/:workspaceSlug/p/:projectKey/milestones" element={<ProjectMilestonesPage />} />
               <Route path="/w/:workspaceSlug/p/:projectKey/charts" element={<SprintDetailsPage />} />

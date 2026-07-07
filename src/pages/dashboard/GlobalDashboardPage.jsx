@@ -69,7 +69,7 @@ export default function GlobalDashboardPage() {
                 <button
                   onClick={() => handleInviteResponse(invite.id, 'accept', invite.workspace?.name)}
                   disabled={respondToInvite.isPending}
-                  className="px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium text-(--color-accent-text) bg-(--color-accent) hover:bg-(--color-accent-hover) rounded-md transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
+                  className="px-3 py-1.5 flex items-center gap-1.5 text-xs font-medium text-white bg-(--color-accent) hover:bg-(--color-accent-hover) rounded-md transition-colors shadow-sm disabled:opacity-50 cursor-pointer"
                 >
                   <Check className="w-3.5 h-3.5" /> Accept
                 </button>
@@ -91,7 +91,7 @@ export default function GlobalDashboardPage() {
         </div>
         <button 
           onClick={() => navigate(`/create-workspace`)}
-          className="h-10 px-4 flex items-center gap-2 bg-(--color-accent) hover:bg-(--color-accent-hover) text-(--color-accent-text) text-sm font-medium rounded-md shadow-sm transition-all cursor-pointer"
+          className="h-10 px-4 flex items-center gap-2 bg-(--color-accent) hover:bg-(--color-accent-hover) text-white text-sm font-medium rounded-md shadow-sm transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
           Create Workspace
@@ -126,7 +126,7 @@ export default function GlobalDashboardPage() {
           </p>
           <button 
             onClick={() => navigate(`/create-workspace`)}
-            className="h-10 px-4 flex items-center gap-2 bg-(--color-accent) hover:bg-(--color-accent-hover) text-(--color-accent-text) text-sm font-medium rounded-md shadow-sm transition-all cursor-pointer"
+            className="h-10 px-4 flex items-center gap-2 bg-(--color-accent) hover:bg-(--color-accent-hover) text-white text-sm font-medium rounded-md shadow-sm transition-all cursor-pointer"
           >
             <Plus className="w-4 h-4" />
             Create Workspace

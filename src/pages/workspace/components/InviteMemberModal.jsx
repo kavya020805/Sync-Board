@@ -95,7 +95,7 @@ export default function InviteMemberModal({ isOpen, onClose, workspaceId }) {
             <button
               type="submit"
               disabled={inviteMember.isPending || !email.trim()}
-              className="px-4 py-2 bg-(--color-accent) hover:bg-(--color-accent-hover) text-(--color-accent-text) text-sm font-medium rounded-md shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              className="px-4 py-2 bg-(--color-accent) hover:bg-(--color-accent-hover) text-white text-sm font-medium rounded-md shadow-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
             >
               {inviteMember.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
               Send Invite

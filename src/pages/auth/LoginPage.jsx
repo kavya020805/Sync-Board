@@ -78,7 +78,7 @@ export default function LoginPage() {
           {/* Feature pills */}
           <div className="flex flex-wrap justify-center gap-2 mt-8">
             {['Real-time sync', 'Kanban boards', 'Sprint planning', 'GitHub integration'].map((feature) => (
-              <span key={feature} className="px-3 py-1.5 text-xs font-medium rounded-full text-white/80 border border-white/15 bg-white/5">
+              <span key={feature} className="px-3 py-1.5 text-xs font-medium rounded-full text-(--color-text-secondary) border border-(--color-border-subtle) bg-(--color-bg-secondary)">
                 {feature}
               </span>
             ))}

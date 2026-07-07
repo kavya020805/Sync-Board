@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { Draggable } from '@hello-pangea/dnd'
-import { MoreHorizontal, Edit2, Trash2 } from 'lucide-react'
+import { MoreHorizontal, Edit2, Trash2, GitPullRequest } from 'lucide-react'
 import { toast } from 'sonner'
 import { useDeleteIssue } from '@/hooks/useBoard'
+import { useCloseGithubIssue, useGithubToken } from '@/hooks/useGithub'
 import EditIssueModal from './EditIssueModal'
 import { useSearchParams } from 'react-router-dom'
 
@@ -12,13 +13,17 @@ const priorityColors = {
   high: 'bg-(--color-error-muted) text-(--color-error)',
 }
 
-export default function BacklogIssueRow({ issue, index }) {
+export default function BacklogIssueRow({ issue, index, project }) {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isEditModalOpen, setIsEditModalOpen] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
   
   const menuRef = useRef(null)
   const deleteIssue = useDeleteIssue()
+  
+  const { data: githubToken } = useGithubToken()
+  const closeGithubIssue = useCloseGithubIssue()
+  const isGithubLinked = !!(project?.github_repo_owner && project?.github_repo_name && githubToken)
 
   useEffect(() => {
     if (searchParams.get('issueId') === issue.id && !isEditModalOpen) {
@@ -44,9 +49,23 @@ export default function BacklogIssueRow({ issue, index }) {
     }
   }, [isMenuOpen])
 
-  const handleDelete = () => {
+  const handleDelete = async () => {
     setIsMenuOpen(false)
     if (window.confirm('Are you sure you want to delete this issue? This cannot be undone.')) {
+      if (isGithubLinked && issue.github_issue_number) {
+        try {
+          await closeGithubIssue.mutateAsync({
+            owner: project.github_repo_owner,
+            repo: project.github_repo_name,
+            issueNumber: issue.github_issue_number
+          })
+          toast.success('Closed issue on GitHub')
+        } catch (err) {
+          console.error('Failed to close issue on GitHub:', err)
+          toast.error('Failed to close issue on GitHub')
+        }
+      }
+
       deleteIssue.mutate(
         { id: issue.id, projectId: issue.project_id },
         {
@@ -82,6 +101,19 @@ export default function BacklogIssueRow({ issue, index }) {
               <span className="text-sm font-medium text-(--color-text-primary) truncate">
                 {issue.title}
               </span>
+              {issue.github_issue_number && (
+                <a 
+                  href={issue.github_issue_url} 
+                  target="_blank" 
+                  rel="noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-[#24292e]/10 border border-[#24292e]/20 text-[10px] font-medium text-[#24292e] hover:bg-[#24292e]/20 transition-colors"
+                  title="View on GitHub"
+                >
+                  <GitPullRequest className="w-3 h-3" />
+                  #{issue.github_issue_number}
+                </a>
+              )}
             </div>
 
             <div className="flex items-center gap-4 shrink-0 pl-4 relative">
@@ -98,7 +130,7 @@ export default function BacklogIssueRow({ issue, index }) {
                 </div>
               )}
               
-              <div ref={menuRef}>
+              <div ref={menuRef} className="relative">
                 <button 
                   onClick={(e) => {
                     e.stopPropagation()

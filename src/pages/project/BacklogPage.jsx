@@ -23,6 +23,18 @@ export default function BacklogPage() {
   
   const { data: serverIssues, isLoading: issuesLoading } = useIssues(project?.id)
   const { data: sprints, isLoading: sprintsLoading } = useSprints(project?.id)
+  
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return
+      if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+        e.preventDefault()
+        setIsCreateModalOpen(true)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
   const { data: columns, isLoading: columnsLoading } = useColumns(project?.id)
   
   const assignToSprint = useAssignIssueToSprint()
@@ -232,8 +244,8 @@ export default function BacklogPage() {
               .sort((a, b) => a.position - b.position)
 
             return (
-              <div key={sprint.id} className="bg-(--color-bg-secondary) border border-(--color-border-default) rounded-xl overflow-hidden shadow-sm">
-                <div className="p-4 border-b border-(--color-border-subtle) bg-(--color-bg-elevated) flex justify-between items-center">
+              <div key={sprint.id} className="bg-(--color-bg-secondary) border border-(--color-border-default) rounded-xl shadow-sm">
+                <div className="p-4 border-b border-(--color-border-subtle) bg-(--color-bg-elevated) rounded-t-xl flex justify-between items-center">
                   <div className="flex items-center gap-3">
                     <h3 className="text-base font-semibold text-(--color-text-primary)">{sprint.name}</h3>
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider ${
@@ -275,13 +287,13 @@ export default function BacklogPage() {
                     <div
                       ref={provided.innerRef}
                       {...provided.droppableProps}
-                      className={`min-h-[80px] transition-colors duration-200 ${
+                      className={`min-h-[80px] rounded-b-xl transition-colors duration-200 ${
                         snapshot.isDraggingOver ? 'bg-(--color-accent-muted)/10' : ''
                       }`}
                     >
                       {sprintIssues.length > 0 ? (
                         sprintIssues.map((issue, index) => (
-                          <BacklogIssueRow key={issue.id} issue={issue} index={index} />
+                          <BacklogIssueRow key={issue.id} issue={issue} index={index} project={project} />
                         ))
                       ) : (
                         <div className="flex items-center justify-center h-20 text-sm text-(--color-text-tertiary) border-2 border-dashed border-(--color-border-subtle) m-2 rounded-lg">
@@ -298,8 +310,8 @@ export default function BacklogPage() {
         </div>
 
         {/* Backlog Section */}
-        <div className="bg-(--color-bg-secondary) border border-(--color-border-default) rounded-xl overflow-hidden shadow-sm mt-4">
-          <div className="p-4 border-b border-(--color-border-subtle) bg-(--color-bg-elevated) flex justify-between items-center">
+        <div className="bg-(--color-bg-secondary) border border-(--color-border-default) rounded-xl shadow-sm mt-4">
+          <div className="p-4 border-b border-(--color-border-subtle) bg-(--color-bg-elevated) rounded-t-xl flex justify-between items-center">
             <h3 className="text-base font-semibold text-(--color-text-primary)">Backlog</h3>
             <span className="text-sm font-medium text-(--color-text-secondary)">{backlogIssues.length} issues</span>
           </div>
@@ -309,13 +321,13 @@ export default function BacklogPage() {
               <div
                 ref={provided.innerRef}
                 {...provided.droppableProps}
-                className={`min-h-[150px] transition-colors duration-200 ${
+                className={`min-h-[150px] rounded-b-xl transition-colors duration-200 ${
                   snapshot.isDraggingOver ? 'bg-(--color-accent-muted)/10' : ''
                 }`}
               >
                 {backlogIssues.length > 0 ? (
                   backlogIssues.map((issue, index) => (
-                    <BacklogIssueRow key={issue.id} issue={issue} index={index} />
+                    <BacklogIssueRow key={issue.id} issue={issue} index={index} project={project} />
                   ))
                 ) : (
                   <div className="flex items-center justify-center h-32 text-sm text-(--color-text-tertiary) border-2 border-dashed border-(--color-border-subtle) m-2 rounded-lg">

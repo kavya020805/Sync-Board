@@ -10,6 +10,7 @@ import { useColumns, useIssues, useMoveIssue } from '@/hooks/useBoard'
 import { useSprints, useCompleteSprint } from '@/hooks/useSprints'
 import { useBoardRealtime } from '@/hooks/useBoardRealtime'
 import { usePresence } from '@/hooks/usePresence'
+import { useCreateBranch, useCreatePR, useClosePR, useSearchPR } from '@/hooks/useGithub'
 
 import BoardColumn from './components/BoardColumn'
 import CreateIssueModal from './components/CreateIssueModal'
@@ -34,6 +35,20 @@ export default function ProjectBoardPage() {
   const { data: serverColumns, isLoading: columnsLoading } = useColumns(project?.id)
   const { data: serverIssues, isLoading: issuesLoading } = useIssues(project?.id)
   const { data: sprints, isLoading: sprintsLoading } = useSprints(project?.id)
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.isContentEditable) return
+      if (e.key === 'n' && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey) {
+        e.preventDefault()
+        if (serverColumns?.length > 0) {
+          setAddingIssueToColumn(serverColumns[0].id)
+        }
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [serverColumns])
   
   const moveIssue = useMoveIssue()
   const completeSprint = useCompleteSprint()
@@ -41,6 +56,12 @@ export default function ProjectBoardPage() {
   // 4. Activate Realtime Sync & Live Presence
   useBoardRealtime(project?.id)
   const activeUsers = usePresence(project?.id)
+
+  // 5. GitHub Automation Hooks
+  const createBranch = useCreateBranch()
+  const createPR = useCreatePR()
+  const closePR = useClosePR()
+  const searchPR = useSearchPR()
 
   // We keep optimistic local state for snappy drag and drop
   const [columns, setColumns] = useState([])
@@ -166,11 +187,86 @@ export default function ProjectBoardPage() {
 
     setIssues(newIssues)
 
+    const isGithubLinked = !!(project?.github_repo_owner && project?.github_repo_name)
+    const destColumn = columns.find(c => c.id === destColumnId)
+    const sourceColumn = columns.find(c => c.id === sourceColumnId)
+
     // Fire mutation
     moveIssue.mutate({
       id: draggableId,
       columnId: destColumnId,
       position: newPosition
+    }, {
+      onSuccess: async () => {
+        if (!isGithubLinked) return
+        
+        const destName = destColumn?.name?.toLowerCase() || ''
+        const sourceName = sourceColumn?.name?.toLowerCase() || ''
+        const branchName = `sb-${draggedIssue.id}`
+        
+        // 1. Moved to In Progress
+        if (destName.includes('progress')) {
+          if (sourceName.includes('done')) {
+            // Dragged back from Done -> Close PR
+            try {
+              const pr = await searchPR.mutateAsync({
+                owner: project.github_repo_owner,
+                repo: project.github_repo_name,
+                branch: branchName
+              })
+              if (pr) {
+                await closePR.mutateAsync({
+                  owner: project.github_repo_owner,
+                  repo: project.github_repo_name,
+                  pullNumber: pr.number
+                })
+                toast.success(`Pull Request #${pr.number} cancelled automatically.`)
+              }
+            } catch (err) {
+              toast.error('Failed to cancel PR: ' + err.message)
+            }
+          } else {
+            // Dragged into progress (e.g. from To Do) -> Create branch
+            try {
+              await createBranch.mutateAsync({
+                owner: project.github_repo_owner,
+                repo: project.github_repo_name,
+                branchName
+              })
+              toast.success(`Branch ${branchName} created successfully. You can now work on it!`)
+            } catch (err) {
+              if (!err.message.includes('Reference already exists')) {
+                toast.error('Failed to create branch: ' + err.message)
+              }
+            }
+          }
+        } 
+        // 2. Moved to Done
+        else if (destName.includes('done')) {
+          const confirmed = window.confirm('Do you want to automatically create a Pull Request for this issue?')
+          if (!confirmed) return
+          try {
+            await createPR.mutateAsync({
+              owner: project.github_repo_owner,
+              repo: project.github_repo_name,
+              title: `Fix: ${draggedIssue.title}`,
+              body: `Resolves issue: ${draggedIssue.title}\n\n${draggedIssue.description || ''}`,
+              head: branchName
+            })
+            toast.success('Pull Request created automatically!')
+          } catch (err) {
+            toast.error(err.message)
+            // Revert optimistic UI
+            setIssues(issues)
+            // Revert in database
+            moveIssue.mutate({
+              id: draggableId,
+              columnId: sourceColumnId,
+              position: draggedIssue.position
+            })
+          }
+        }
+      }
     })
   }
 

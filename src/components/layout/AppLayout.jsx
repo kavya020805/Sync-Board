@@ -2,6 +2,9 @@ import { useState } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import Navbar from './Navbar'
 import Sidebar from './Sidebar'
+import ShortcutHelper from '../ShortcutHelper'
+import CommandPalette from '../CommandPalette'
+import TutorialTour from '../TutorialTour'
 import { Menu } from 'lucide-react'
 
 /**
@@ -39,6 +42,10 @@ export default function AppLayout() {
           </div>
         </main>
       </div>
+
+      <ShortcutHelper />
+      <CommandPalette />
+      <TutorialTour />
     </div>
   )
 }
