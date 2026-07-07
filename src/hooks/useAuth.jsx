@@ -123,7 +123,7 @@ export function AuthProvider({ children }) {
     return { data, error }
   }, [])
 
-  // Sign in with OAuth (Google, Discord)
+  // Sign in with OAuth (Google, GitHub)
   const signInWithOAuth = useCallback(async (provider) => {
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider,
