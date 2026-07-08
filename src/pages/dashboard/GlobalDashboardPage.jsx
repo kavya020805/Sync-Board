@@ -6,6 +6,8 @@ import { useAuth } from '@/hooks/useAuth'
 import { Bell, Check, X, Plus, FolderKanban, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { getInitials } from '@/lib/utils'
+import BlurText from '@/components/animations/BlurText'
+import ShinyText from '@/components/animations/ShinyText'
 
 export default function GlobalDashboardPage() {
   const { user } = useAuth()
@@ -82,9 +84,9 @@ export default function GlobalDashboardPage() {
       {/* Header */}
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-(--color-text-primary)">
-            Welcome back
-          </h1>
+          <div className="text-2xl font-bold text-(--color-text-primary)">
+            <BlurText text="Welcome back" delay={100} animateBy="words" />
+          </div>
           <p className="text-sm text-(--color-text-secondary) mt-1">
             Select a workspace to view your projects and issues
           </p>
@@ -94,7 +96,7 @@ export default function GlobalDashboardPage() {
           className="h-10 px-4 flex items-center gap-2 bg-(--color-accent) hover:bg-(--color-accent-hover) text-white text-sm font-medium rounded-md shadow-sm transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
-          Create Workspace
+          <ShinyText text="Create Workspace" />
         </button>
       </div>
 

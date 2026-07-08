@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react'
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { useProject, useUpdateProject } from '@/hooks/useProjects'
-import { GitBranch, Loader2, Link as LinkIcon, Unplug } from 'lucide-react'
+import { useAutomations, useCreateAutomation, useDeleteAutomation } from '@/hooks/useAutomations'
+import { useColumns } from '@/hooks/useBoard'
+import { GitBranch, Loader2, Link as LinkIcon, Unplug, Zap, Trash2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import { toast } from 'sonner'
 
@@ -20,6 +22,29 @@ export default function ProjectSettingsPage() {
   const [isLinking, setIsLinking] = useState(false)
   const [repos, setRepos] = useState([])
   const [selectedRepo, setSelectedRepo] = useState('')
+
+  const { data: automations } = useAutomations(project?.id)
+  const { data: columns } = useColumns(project?.id)
+  const createAutomation = useCreateAutomation()
+  const deleteAutomation = useDeleteAutomation()
+
+  const [newTrigger, setNewTrigger] = useState('github_pr_merged')
+  const [newActionColumnId, setNewActionColumnId] = useState('')
+
+  const handleCreateAutomation = () => {
+    if (!newActionColumnId) return
+    createAutomation.mutate({
+      projectId: project.id,
+      trigger_event: newTrigger,
+      action_type: 'move_issue',
+      action_payload: { column_id: newActionColumnId }
+    }, {
+      onSuccess: () => {
+        toast.success('Automation rule created!')
+        setNewActionColumnId('')
+      }
+    })
+  }
 
   // Handle OAuth callback
   useEffect(() => {
@@ -203,6 +228,84 @@ export default function ProjectSettingsPage() {
                 </p>
               </div>
             )}
+          </div>
+        </div>
+
+        {/* Automations Rules Engine */}
+        <div className="bg-(--color-bg-secondary) border border-(--color-border-default) rounded-xl overflow-hidden mt-8 animate-scale-in">
+          <div className="p-6 border-b border-(--color-border-subtle)">
+            <h2 className="text-lg font-semibold text-(--color-text-primary) flex items-center gap-2">
+              <Zap className="w-5 h-5 text-amber-500" />
+              Automations
+            </h2>
+            <p className="text-sm text-(--color-text-secondary) mt-1">
+              Create rules to automatically move issues based on GitHub events.
+            </p>
+          </div>
+          <div className="p-6 flex flex-col gap-6">
+            <div className="flex flex-col sm:flex-row gap-4 items-end bg-(--color-bg-primary) p-4 rounded-lg border border-(--color-border-subtle)">
+              <div className="flex-1 w-full">
+                <label className="block text-xs font-medium text-(--color-text-tertiary) uppercase tracking-wider mb-2">When</label>
+                <select
+                  value={newTrigger}
+                  onChange={(e) => setNewTrigger(e.target.value)}
+                  className="w-full h-10 px-3 rounded-md border border-(--color-border-default) bg-(--color-bg-secondary) text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-accent) focus:ring-1 focus:ring-(--color-accent)"
+                >
+                  <option value="github_pr_merged">GitHub PR is merged</option>
+                  <option value="github_issue_closed">GitHub Issue is closed</option>
+                  <option value="github_issue_reopened">GitHub Issue is reopened</option>
+                </select>
+              </div>
+              <div className="flex-1 w-full">
+                <label className="block text-xs font-medium text-(--color-text-tertiary) uppercase tracking-wider mb-2">Then move to</label>
+                <select
+                  value={newActionColumnId}
+                  onChange={(e) => setNewActionColumnId(e.target.value)}
+                  className="w-full h-10 px-3 rounded-md border border-(--color-border-default) bg-(--color-bg-secondary) text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-accent) focus:ring-1 focus:ring-(--color-accent)"
+                >
+                  <option value="">-- Select Column --</option>
+                  {columns?.map(c => (
+                    <option key={c.id} value={c.id}>{c.name}</option>
+                  ))}
+                </select>
+              </div>
+              <button
+                onClick={handleCreateAutomation}
+                disabled={!newActionColumnId || createAutomation.isPending}
+                className="h-10 px-4 rounded-md text-sm font-medium bg-(--color-accent) text-white hover:bg-(--color-accent-hover) transition-colors disabled:opacity-50 cursor-pointer shrink-0 w-full sm:w-auto"
+              >
+                {createAutomation.isPending ? 'Saving...' : 'Add Rule'}
+              </button>
+            </div>
+
+            <div className="flex flex-col gap-3 mt-4">
+              <h3 className="text-sm font-semibold text-(--color-text-primary)">Active Rules</h3>
+              {automations?.length === 0 ? (
+                <p className="text-sm text-(--color-text-secondary) italic">No automation rules created yet.</p>
+              ) : (
+                automations?.map(rule => {
+                  const targetCol = columns?.find(c => c.id === rule.action_payload?.column_id)
+                  const triggerText = rule.trigger_event === 'github_pr_merged' ? 'PR merged' : rule.trigger_event === 'github_issue_closed' ? 'Issue closed' : 'Issue reopened'
+                  return (
+                    <div key={rule.id} className="flex items-center justify-between p-3 rounded-lg border border-(--color-border-default) bg-(--color-bg-primary)">
+                      <div className="flex items-center gap-2 text-sm">
+                        <span className="font-medium text-(--color-text-primary)">When</span>
+                        <span className="px-2 py-0.5 bg-(--color-bg-hover) rounded text-(--color-text-secondary)">{triggerText}</span>
+                        <span className="font-medium text-(--color-text-primary)">move to</span>
+                        <span className="px-2 py-0.5 bg-(--color-bg-hover) rounded text-(--color-text-secondary)">{targetCol?.name || 'Unknown'}</span>
+                      </div>
+                      <button
+                        onClick={() => deleteAutomation.mutate({ id: rule.id, projectId: project.id })}
+                        className="p-1.5 text-(--color-text-secondary) hover:text-(--color-error) hover:bg-red-500/10 rounded-md transition-colors cursor-pointer"
+                        title="Delete Rule"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  )
+                })
+              )}
+            </div>
           </div>
         </div>
       </div>

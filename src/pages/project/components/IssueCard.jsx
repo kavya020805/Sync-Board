@@ -1,6 +1,7 @@
 import React from 'react'
 import { Draggable } from '@hello-pangea/dnd'
 import { MoreHorizontal } from 'lucide-react'
+import SpotlightCard from '@/components/animations/SpotlightCard'
 
 const priorityColors = {
   low: 'bg-(--color-success-muted) text-(--color-success)',
@@ -12,13 +13,13 @@ export default function IssueCard({ issue, index, onClick }) {
   return (
     <Draggable draggableId={issue.id} index={index}>
       {(provided, snapshot) => (
-        <div
+        <SpotlightCard
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
           onClick={() => onClick?.(issue)}
           className={`
-            p-3 mb-2 rounded-md border bg-(--color-bg-primary) shadow-sm cursor-pointer
+            p-3 mb-2 rounded-md border shadow-sm cursor-pointer
             transition-all duration-200 
             ${snapshot.isDragging ? 'border-(--color-accent) shadow-lg scale-105 rotate-1 z-50' : 'border-(--color-border-default) hover:border-(--color-border-strong) hover:shadow-md'}
           `}
@@ -53,7 +54,7 @@ export default function IssueCard({ issue, index, onClick }) {
               </div>
             )}
           </div>
-        </div>
+        </SpotlightCard>
       )}
     </Draggable>
   )

@@ -12,6 +12,7 @@ import ForgotPasswordPage from '@/pages/auth/ForgotPasswordPage'
 import ResetPasswordPage from '@/pages/auth/ResetPasswordPage'
 import AuthCallbackPage from '@/pages/auth/AuthCallbackPage'
 import GithubCallbackPage from '@/pages/auth/GithubCallbackPage'
+import AuthLayout from '@/components/layout/AuthLayout'
 
 // Protected pages
 import AppLayout from '@/components/layout/AppLayout'
@@ -29,6 +30,8 @@ import ProjectBoardPage from '@/pages/project/ProjectBoardPage'
 import BacklogPage from '@/pages/project/BacklogPage'
 import SprintDetailsPage from '@/pages/project/SprintDetailsPage'
 import ProjectMilestonesPage from '@/pages/project/ProjectMilestonesPage'
+import ProjectEpicsPage from '@/pages/project/ProjectEpicsPage'
+import ProjectTimelinePage from '@/pages/project/ProjectTimelinePage'
 import ProjectSettingsPage from '@/pages/project/ProjectSettingsPage'
 
 const queryClient = new QueryClient({
@@ -50,10 +53,13 @@ export default function App() {
         <BrowserRouter>
           <Routes>
             {/* Public routes */}
-            <Route path="/login" element={<LoginPage />} />
-            <Route path="/signup" element={<SignUpPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-            <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+            <Route element={<AuthLayout />}>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignUpPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/auth/reset-password" element={<ResetPasswordPage />} />
+            </Route>
+            
             <Route path="/auth/callback" element={<AuthCallbackPage />} />
             <Route path="/github/callback" element={<GithubCallbackPage />} />
 
@@ -86,6 +92,8 @@ export default function App() {
               <Route path="/w/:workspaceSlug/p/:projectKey/board" element={<ProjectBoardPage />} />
               <Route path="/w/:workspaceSlug/p/:projectKey/backlog" element={<BacklogPage />} />
               <Route path="/w/:workspaceSlug/p/:projectKey/milestones" element={<ProjectMilestonesPage />} />
+              <Route path="/w/:workspaceSlug/p/:projectKey/epics" element={<ProjectEpicsPage />} />
+              <Route path="/w/:workspaceSlug/p/:projectKey/timeline" element={<ProjectTimelinePage />} />
               <Route path="/w/:workspaceSlug/p/:projectKey/charts" element={<SprintDetailsPage />} />
               <Route path="/w/:workspaceSlug/p/:projectKey/settings" element={<ProjectSettingsPage />} />
               <Route path="/settings/profile" element={<ProfilePage />} />

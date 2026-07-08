@@ -8,6 +8,8 @@ import { useProjectActivity } from '@/hooks/useActivity'
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts'
 import { Loader2, LayoutDashboard, AlertCircle, CheckCircle2, CircleDashed, Activity } from 'lucide-react'
 import { format, isPast, isToday, formatDistanceToNow } from 'date-fns'
+import BlurText from '@/components/animations/BlurText'
+import SpotlightCard from '@/components/animations/SpotlightCard'
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6']
 
@@ -86,7 +88,7 @@ export default function ProjectDashboardPage() {
         <div>
           <h1 className="text-2xl font-bold text-(--color-text-primary) flex items-center gap-2">
             <LayoutDashboard className="w-6 h-6 text-(--color-accent)" />
-            {project.name} Dashboard
+            <BlurText text={`${project?.name || ''} Dashboard`} delay={100} animateBy="words" />
           </h1>
           <p className="text-sm text-(--color-text-secondary) mt-1">
             Overview of project health and sprint progress.
@@ -95,32 +97,32 @@ export default function ProjectDashboardPage() {
 
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div className="bg-(--color-bg-secondary) border border-(--color-border-subtle) rounded-xl p-5 shadow-sm">
+          <SpotlightCard className="p-5">
             <h3 className="text-sm font-medium text-(--color-text-secondary) flex items-center gap-2">
               <CircleDashed className="w-4 h-4" /> Total Issues
             </h3>
             <p className="text-3xl font-bold text-(--color-text-primary) mt-2">{totalIssues}</p>
-          </div>
-          <div className="bg-(--color-bg-secondary) border border-(--color-border-subtle) rounded-xl p-5 shadow-sm">
+          </SpotlightCard>
+          <SpotlightCard className="p-5">
             <h3 className="text-sm font-medium text-(--color-text-secondary) flex items-center gap-2">
               <AlertCircle className="w-4 h-4 text-(--color-warning)" /> Open Issues
             </h3>
             <p className="text-3xl font-bold text-(--color-text-primary) mt-2">{openIssues}</p>
-          </div>
-          <div className="bg-(--color-bg-secondary) border border-(--color-border-subtle) rounded-xl p-5 shadow-sm">
+          </SpotlightCard>
+          <SpotlightCard className="p-5">
             <h3 className="text-sm font-medium text-(--color-text-secondary) flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 text-(--color-success)" /> Completed
             </h3>
             <p className="text-3xl font-bold text-(--color-text-primary) mt-2">{completedIssues}</p>
-          </div>
-          <div className="bg-(--color-bg-secondary) border border-(--color-border-subtle) rounded-xl p-5 shadow-sm">
+          </SpotlightCard>
+          <SpotlightCard className="p-5">
             <h3 className="text-sm font-medium text-(--color-text-secondary) flex items-center gap-2">
               <LayoutDashboard className="w-4 h-4 text-(--color-accent)" /> Active Sprint
             </h3>
             <p className="text-lg font-bold text-(--color-text-primary) mt-2 truncate">
               {activeSprint ? activeSprint.name : 'No active sprint'}
             </p>
-          </div>
+          </SpotlightCard>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">

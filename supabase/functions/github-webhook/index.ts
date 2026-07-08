@@ -33,7 +33,6 @@ serve(async (req) => {
       else if (pr.state === 'closed') prStatus = 'closed'
 
       // Attempt to parse issue UUID from branch name (e.g. sb-<uuid>)
-      // Because we use UUIDs instead of incremental IDs, developers must use the issue UUID in branch names.
       const uuidRegex = /sb-([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12})/i
       const match = branchName.match(uuidRegex)
       
@@ -63,6 +62,32 @@ serve(async (req) => {
           
           if (error) console.error('Failed to upsert PR:', error)
           else console.log(`Linked PR #${prNumber} to Issue ${issueId}`)
+
+          // Automations Engine: Trigger rules on PR merge
+          if (pr.merged) {
+            // Get issue project id
+            const { data: issue } = await supabase.from('issues').select('project_id, sprint_id').eq('id', issueId).maybeSingle()
+            if (issue && issue.project_id && issue.sprint_id) {
+              // Find automation for 'github_pr_merged'
+              const { data: automations } = await supabase
+                .from('automations')
+                .select('*')
+                .eq('project_id', issue.project_id)
+                .eq('trigger_event', 'github_pr_merged')
+
+              if (automations && automations.length > 0) {
+                for (const rule of automations) {
+                  if (rule.action_type === 'move_issue' && rule.action_payload?.column_id) {
+                    await supabase.from('issues').update({ column_id: rule.action_payload.column_id }).eq('id', issueId)
+                  }
+                }
+              } else {
+                 // Fallback if no rules
+                 const { data: doneCol } = await supabase.from('board_columns').select('id').eq('project_id', issue.project_id).ilike('name', '%done%').maybeSingle()
+                 if (doneCol) await supabase.from('issues').update({ column_id: doneCol.id }).eq('id', issueId)
+              }
+            }
+          }
         }
       }
     } else if (event === 'issues') {
@@ -144,12 +169,30 @@ serve(async (req) => {
                const { data: existing } = await supabase.from('issues').select('sprint_id').eq('project_id', project.id).eq('github_issue_number', issue.number).maybeSingle()
                
                if (existing && existing.sprint_id) {
-                 if (action === 'closed') {
-                   const { data: doneCol } = await supabase.from('board_columns').select('id').eq('project_id', project.id).ilike('name', '%done%').maybeSingle()
-                   if (doneCol) updates.column_id = doneCol.id
-                 } else if (action === 'reopened') {
-                   const { data: todoCol } = await supabase.from('board_columns').select('id').eq('project_id', project.id).ilike('name', '%to do%').maybeSingle()
-                   if (todoCol) updates.column_id = todoCol.id
+                 const triggerEvent = action === 'closed' ? 'github_issue_closed' : 'github_issue_reopened'
+                 
+                 // Find automation rules for this trigger
+                 const { data: automations } = await supabase
+                    .from('automations')
+                    .select('*')
+                    .eq('project_id', project.id)
+                    .eq('trigger_event', triggerEvent)
+
+                 if (automations && automations.length > 0) {
+                    for (const rule of automations) {
+                      if (rule.action_type === 'move_issue' && rule.action_payload?.column_id) {
+                        updates.column_id = rule.action_payload.column_id
+                      }
+                    }
+                 } else {
+                    // Fallbacks
+                    if (action === 'closed') {
+                      const { data: doneCol } = await supabase.from('board_columns').select('id').eq('project_id', project.id).ilike('name', '%done%').maybeSingle()
+                      if (doneCol) updates.column_id = doneCol.id
+                    } else if (action === 'reopened') {
+                      const { data: todoCol } = await supabase.from('board_columns').select('id').eq('project_id', project.id).ilike('name', '%to do%').maybeSingle()
+                      if (todoCol) updates.column_id = todoCol.id
+                    }
                  }
                }
             }

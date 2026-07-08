@@ -10,6 +10,7 @@ import { usePullRequests } from '@/hooks/usePullRequests'
 import { useParams } from 'react-router-dom'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { useWorkspaceMembers } from '@/hooks/useWorkspaceMembers'
+import { useEpics } from '@/hooks/useEpics'
 import { useGithubToken, useCreateBranch, useUpdateGithubIssue } from '@/hooks/useGithub'
 import { toast } from 'sonner'
 
@@ -23,12 +24,16 @@ export default function EditIssueModal({ issue, onClose }) {
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState('medium')
   const [milestoneId, setMilestoneId] = useState('')
+  const [epicId, setEpicId] = useState('')
+  const [parentId, setParentId] = useState('')
   const [assigneeId, setAssigneeId] = useState('')
   const [storyPoints, setStoryPoints] = useState('')
+  const [startDate, setStartDate] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [activeTab, setActiveTab] = useState('details')
 
   const { data: milestones } = useMilestones(issue?.project_id)
+  const { data: epics } = useEpics(issue?.project_id)
   const { data: pullRequests } = usePullRequests(issue?.id)
   const updateIssue = useUpdateIssue()
 
@@ -56,8 +61,11 @@ export default function EditIssueModal({ issue, onClose }) {
       setDescription(issue.description || '')
       setPriority(issue.priority || 'medium')
       setMilestoneId(issue.milestone_id || '')
+      setEpicId(issue.epic_id || '')
+      setParentId(issue.parent_id || '')
       setAssigneeId(issue.assignee_id || '')
       setStoryPoints(issue.story_points !== null ? String(issue.story_points) : '')
+      setStartDate(issue.start_date ? issue.start_date.split('T')[0] : '')
       setDueDate(issue.due_date ? issue.due_date.split('T')[0] : '')
     }
   }, [issue])
@@ -76,8 +84,11 @@ export default function EditIssueModal({ issue, onClose }) {
           description: description.trim() || null,
           priority,
           milestone_id: milestoneId || null,
+          epic_id: epicId || null,
+          parent_id: parentId || null,
           assignee_id: assigneeId || null,
           story_points: storyPoints ? parseInt(storyPoints, 10) : null,
+          start_date: startDate ? new Date(startDate).toISOString() : null,
           due_date: dueDate ? new Date(dueDate).toISOString() : null,
         }
       },
@@ -265,6 +276,62 @@ export default function EditIssueModal({ issue, onClose }) {
                     </option>
                   ))}
                 </select>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-(--color-text-secondary) mb-1.5">
+                    Epic (Optional)
+                  </label>
+                  <select
+                    value={epicId}
+                    onChange={(e) => setEpicId(e.target.value)}
+                    className="w-full h-10 px-3 rounded-md border border-(--color-border-default) bg-(--color-bg-secondary) text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-accent) focus:ring-1 focus:ring-(--color-accent)"
+                  >
+                    <option value="">No Epic</option>
+                    {epics?.map(e => (
+                      <option key={e.id} value={e.id}>{e.title}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="flex gap-4">
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-(--color-text-secondary) mb-1.5">
+                    Start Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                    className="w-full h-10 px-3 rounded-md border border-(--color-border-default) bg-(--color-bg-secondary) text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-accent) focus:ring-1 focus:ring-(--color-accent)"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-(--color-text-secondary) mb-1.5">
+                    Due Date (Optional)
+                  </label>
+                  <input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                    className="w-full h-10 px-3 rounded-md border border-(--color-border-default) bg-(--color-bg-secondary) text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-accent) focus:ring-1 focus:ring-(--color-accent)"
+                  />
+                </div>
+                <div className="flex-1">
+                  <label className="block text-sm font-medium text-(--color-text-secondary) mb-1.5">
+                    Story Pts
+                  </label>
+                  <input
+                    type="number"
+                    min="0"
+                    value={storyPoints}
+                    onChange={(e) => setStoryPoints(e.target.value)}
+                    placeholder="E.g. 5"
+                    className="w-full h-10 px-3 rounded-md border border-(--color-border-default) bg-(--color-bg-secondary) text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-accent) focus:ring-1 focus:ring-(--color-accent)"
+                  />
+                </div>
               </div>
 
               <div className="flex justify-end gap-3 mt-4 pt-4 border-t border-(--color-border-subtle)">

@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
 import { X } from 'lucide-react'
-import { useCreateIssue } from '@/hooks/useBoard'
+import { useCreateIssue, useIssues } from '@/hooks/useBoard'
 import { useMilestones } from '@/hooks/useSprints'
+import { useEpics } from '@/hooks/useEpics'
 import { useGithubToken, useCreateGithubIssue } from '@/hooks/useGithub'
 import { GitPullRequest, Loader2 } from 'lucide-react'
 import { useParams } from 'react-router-dom'
@@ -12,7 +13,10 @@ export default function CreateIssueModal({ projectId, columnId, onClose }) {
   const [description, setDescription] = useState('')
   const [priority, setPriority] = useState('medium')
   const [milestoneId, setMilestoneId] = useState('')
+  const [epicId, setEpicId] = useState('')
+  const [parentId, setParentId] = useState('')
   const [storyPoints, setStoryPoints] = useState('')
+  const [startDate, setStartDate] = useState('')
   const [dueDate, setDueDate] = useState('')
 
   const { workspaceSlug, projectKey } = useParams()
@@ -22,6 +26,8 @@ export default function CreateIssueModal({ projectId, columnId, onClose }) {
   // Use useProject from hooks/useProjects.js, but since it's missing here, we'll fetch project directly or pass it down
   // Wait, I can just use the supabase client to fetch it quickly or I can use the useProject hook
   const { data: milestones } = useMilestones(projectId)
+  const { data: epics } = useEpics(projectId)
+  const { data: allIssues } = useIssues(projectId)
   const createIssue = useCreateIssue()
   
   // Need to import useProject from correct path
@@ -74,7 +80,10 @@ export default function CreateIssueModal({ projectId, columnId, onClose }) {
         description: description.trim() || null,
         priority,
         milestone_id: milestoneId || null,
+        epic_id: epicId || null,
+        parent_id: parentId || null,
         story_points: storyPoints ? parseInt(storyPoints, 10) : null,
+        start_date: startDate ? new Date(startDate).toISOString() : null,
         due_date: dueDate ? new Date(dueDate).toISOString() : null,
         github_issue_number: githubIssueNumber,
         github_issue_url: githubIssueUrl
@@ -162,14 +171,45 @@ export default function CreateIssueModal({ projectId, columnId, onClose }) {
           <div className="flex gap-4">
             <div className="flex-1">
               <label className="block text-sm font-medium text-(--color-text-secondary) mb-1.5">
-                Story Points (Optional)
+                Epic (Optional)
+              </label>
+              <select
+                value={epicId}
+                onChange={(e) => setEpicId(e.target.value)}
+                className="w-full h-10 px-3 rounded-md border border-(--color-border-default) bg-(--color-bg-secondary) text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-accent) focus:ring-1 focus:ring-(--color-accent)"
+              >
+                <option value="">No Epic</option>
+                {epics?.map(e => (
+                  <option key={e.id} value={e.id}>{e.title}</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-(--color-text-secondary) mb-1.5">
+                Parent Issue (Optional)
+              </label>
+              <select
+                value={parentId}
+                onChange={(e) => setParentId(e.target.value)}
+                className="w-full h-10 px-3 rounded-md border border-(--color-border-default) bg-(--color-bg-secondary) text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-accent) focus:ring-1 focus:ring-(--color-accent)"
+              >
+                <option value="">No Parent</option>
+                {allIssues?.filter(i => !i.parent_id).map(i => (
+                  <option key={i.id} value={i.id}>{i.title}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex gap-4">
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-(--color-text-secondary) mb-1.5">
+                Start Date (Optional)
               </label>
               <input
-                type="number"
-                min="0"
-                value={storyPoints}
-                onChange={(e) => setStoryPoints(e.target.value)}
-                placeholder="E.g. 5"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
                 className="w-full h-10 px-3 rounded-md border border-(--color-border-default) bg-(--color-bg-secondary) text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-accent) focus:ring-1 focus:ring-(--color-accent)"
               />
             </div>
@@ -181,6 +221,19 @@ export default function CreateIssueModal({ projectId, columnId, onClose }) {
                 type="date"
                 value={dueDate}
                 onChange={(e) => setDueDate(e.target.value)}
+                className="w-full h-10 px-3 rounded-md border border-(--color-border-default) bg-(--color-bg-secondary) text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-accent) focus:ring-1 focus:ring-(--color-accent)"
+              />
+            </div>
+            <div className="flex-1">
+              <label className="block text-sm font-medium text-(--color-text-secondary) mb-1.5">
+                Story Pts
+              </label>
+              <input
+                type="number"
+                min="0"
+                value={storyPoints}
+                onChange={(e) => setStoryPoints(e.target.value)}
+                placeholder="E.g. 5"
                 className="w-full h-10 px-3 rounded-md border border-(--color-border-default) bg-(--color-bg-secondary) text-sm text-(--color-text-primary) focus:outline-none focus:border-(--color-accent) focus:ring-1 focus:ring-(--color-accent)"
               />
             </div>

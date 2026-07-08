@@ -191,6 +191,18 @@ export default function Sidebar({ isOpen, onClose }) {
                           Milestones
                         </NavLink>
                         <NavLink
+                          to={`${projectBasePath}/epics`}
+                          className={({ isActive }) => `text-xs py-1.5 px-2 rounded-md transition-colors ${isActive ? 'text-(--color-text-primary) font-medium bg-(--color-bg-hover)' : 'text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover)'}`}
+                        >
+                          Epics
+                        </NavLink>
+                        <NavLink
+                          to={`${projectBasePath}/timeline`}
+                          className={({ isActive }) => `text-xs py-1.5 px-2 rounded-md transition-colors ${isActive ? 'text-(--color-text-primary) font-medium bg-(--color-bg-hover)' : 'text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover)'}`}
+                        >
+                          Timeline
+                        </NavLink>
+                        <NavLink
                           to={`${projectBasePath}/charts`}
                           className={({ isActive }) => `text-xs py-1.5 px-2 rounded-md transition-colors ${isActive ? 'text-(--color-text-primary) font-medium bg-(--color-bg-hover)' : 'text-(--color-text-secondary) hover:text-(--color-text-primary) hover:bg-(--color-bg-hover)'}`}
                         >

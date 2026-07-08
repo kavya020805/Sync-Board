@@ -6,7 +6,7 @@ import { toast } from 'sonner'
 
 import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { useProject } from '@/hooks/useProjects'
-import { useColumns, useIssues, useMoveIssue } from '@/hooks/useBoard'
+import { useColumns, useIssues, useMoveIssue, useCreateColumn } from '@/hooks/useBoard'
 import { useSprints, useCompleteSprint } from '@/hooks/useSprints'
 import { useBoardRealtime } from '@/hooks/useBoardRealtime'
 import { usePresence } from '@/hooks/usePresence'
@@ -23,8 +23,8 @@ export default function ProjectBoardPage() {
   // Modal state
   const [addingIssueToColumn, setAddingIssueToColumn] = useState(null)
   const [editingIssue, setEditingIssue] = useState(null)
-  
-  // 1. Get workspace ID
+  const [isAddingColumn, setIsAddingColumn] = useState(false)
+  const [newColumnName, setNewColumnName] = useState('')
   const { workspaces } = useWorkspaces()
   const workspace = workspaces?.find((w) => w.slug === workspaceSlug)
   
@@ -52,6 +52,23 @@ export default function ProjectBoardPage() {
   
   const moveIssue = useMoveIssue()
   const completeSprint = useCompleteSprint()
+  const createColumn = useCreateColumn()
+
+  const handleAddColumn = () => {
+    if (!newColumnName.trim() || !project?.id) return
+    const maxPosition = columns.length > 0 ? Math.max(...columns.map(c => c.position)) : 0
+    createColumn.mutate({
+      projectId: project.id,
+      name: newColumnName.trim(),
+      position: maxPosition + 1000
+    }, {
+      onSuccess: () => {
+        setNewColumnName('')
+        setIsAddingColumn(false)
+        toast.success('Section added successfully')
+      }
+    })
+  }
 
   // 4. Activate Realtime Sync & Live Presence
   useBoardRealtime(project?.id)
@@ -387,9 +404,48 @@ export default function ProjectBoardPage() {
               })}
               
               {/* Add Column Button */}
-              <button className="shrink-0 w-72 h-12 flex items-center gap-2 px-4 rounded-lg border border-dashed border-(--color-border-default) text-(--color-text-secondary) hover:text-(--color-text-primary) hover:border-(--color-border-strong) hover:bg-(--color-bg-secondary) transition-all cursor-pointer">
-                <span className="text-sm font-medium">+ Add Section</span>
-              </button>
+              {isAddingColumn ? (
+                <div className="shrink-0 w-72 p-2 bg-(--color-bg-secondary) border border-(--color-border-strong) rounded-lg shadow-sm">
+                  <input
+                    autoFocus
+                    type="text"
+                    placeholder="Enter section name..."
+                    className="w-full px-3 py-2 text-sm bg-transparent border-none focus:outline-none text-(--color-text-primary)"
+                    value={newColumnName}
+                    onChange={(e) => setNewColumnName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleAddColumn()
+                      if (e.key === 'Escape') setIsAddingColumn(false)
+                    }}
+                    onBlur={() => {
+                      if (newColumnName.trim()) handleAddColumn()
+                      else setIsAddingColumn(false)
+                    }}
+                  />
+                  <div className="flex justify-end gap-2 mt-2 px-1">
+                    <button 
+                      onMouseDown={(e) => { e.preventDefault(); setIsAddingColumn(false); }}
+                      className="text-xs font-medium text-(--color-text-secondary) hover:text-(--color-text-primary) px-2 py-1 cursor-pointer"
+                    >
+                      Cancel
+                    </button>
+                    <button 
+                      onMouseDown={(e) => { e.preventDefault(); handleAddColumn(); }}
+                      className="text-xs font-medium bg-(--color-accent) text-white rounded px-3 py-1 hover:bg-(--color-accent-hover) cursor-pointer"
+                      disabled={createColumn.isPending}
+                    >
+                      {createColumn.isPending ? 'Adding...' : 'Add'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <button 
+                  onClick={() => setIsAddingColumn(true)}
+                  className="shrink-0 w-72 h-12 flex items-center gap-2 px-4 rounded-lg border border-dashed border-(--color-border-default) text-(--color-text-secondary) hover:text-(--color-text-primary) hover:border-(--color-border-strong) hover:bg-(--color-bg-secondary) transition-all cursor-pointer"
+                >
+                  <span className="text-sm font-medium">+ Add Section</span>
+                </button>
+              )}
             </div>
           </DragDropContext>
         )}

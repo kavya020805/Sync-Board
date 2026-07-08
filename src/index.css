@@ -7,21 +7,21 @@
 
 @theme {
   /* Colors — Neutral (slate-based) */
-  --color-bg-primary: #0a0a0f;
-  --color-bg-secondary: #12121a;
-  --color-bg-tertiary: #1a1a25;
-  --color-bg-elevated: #1e1e2a;
-  --color-bg-hover: #252533;
-  --color-bg-active: #2a2a3a;
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #0a0a0a;
+  --color-bg-tertiary: #121212;
+  --color-bg-elevated: #1a1a1a;
+  --color-bg-hover: #27272a;
+  --color-bg-active: #3f3f46;
 
-  --color-border-default: #2a2a3a;
-  --color-border-subtle: #1f1f2e;
-  --color-border-strong: #3a3a4d;
+  --color-border-default: #27272a;
+  --color-border-subtle: #18181b;
+  --color-border-strong: #3f3f46;
 
-  --color-text-primary: #f0f0f5;
-  --color-text-secondary: #8a8aa3;
-  --color-text-tertiary: #5c5c73;
-  --color-text-inverse: #0a0a0f;
+  --color-text-primary: #f4f4f5;
+  --color-text-secondary: #a1a1aa;
+  --color-text-tertiary: #71717a;
+  --color-text-inverse: #000000;
 
   /* Accent — Indigo */
   --color-accent: #6366f1;
@@ -146,6 +146,10 @@ body {
   animation: fadeIn var(--transition-normal) ease forwards;
 }
 
+.animate-shine {
+  animation: shine 3s linear infinite;
+}
+
 .animate-slide-up {
   animation: slideUp var(--transition-normal) ease forwards;
 }
@@ -180,6 +184,11 @@ body {
 
 @keyframes spin {
   to { transform: rotate(360deg); }
+}
+
+@keyframes shine {
+  0% { background-position: 100% 50%; }
+  100% { background-position: -100% 50%; }
 }
 
 .animate-spin {
