@@ -4,9 +4,11 @@ import { useCreateIssue, useIssues } from '@/hooks/useBoard'
 import { useMilestones } from '@/hooks/useSprints'
 import { useEpics } from '@/hooks/useEpics'
 import { useGithubToken, useCreateGithubIssue } from '@/hooks/useGithub'
-import { GitPullRequest, Loader2 } from 'lucide-react'
+import { GitPullRequest, Loader2, Sparkles } from 'lucide-react'
 import { useParams } from 'react-router-dom'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
+import { generateIssueDraft, triageIssue } from '@/lib/gemini'
+import { toast } from 'sonner'
 
 export default function CreateIssueModal({ projectId, columnId, onClose }) {
   const [title, setTitle] = useState('')
@@ -18,6 +20,45 @@ export default function CreateIssueModal({ projectId, columnId, onClose }) {
   const [storyPoints, setStoryPoints] = useState('')
   const [startDate, setStartDate] = useState('')
   const [dueDate, setDueDate] = useState('')
+
+  const [isDrafting, setIsDrafting] = useState(false)
+  const [isTriaging, setIsTriaging] = useState(false)
+
+  const handleDraftAI = async () => {
+    if (!title.trim()) {
+      toast.error('Please enter an issue title first.')
+      return
+    }
+    setIsDrafting(true)
+    try {
+      const draft = await generateIssueDraft(title)
+      setDescription(draft)
+      toast.success('AI Draft generated!')
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setIsDrafting(false)
+    }
+  }
+
+  const handleTriageAI = async () => {
+    if (!title.trim()) {
+      toast.error('Please enter a title to triage.')
+      return
+    }
+    setIsTriaging(true)
+    try {
+      const result = await triageIssue(title, description)
+      if (result.priority) {
+        setPriority(result.priority)
+        toast.success(`Priority set to ${result.priority}`)
+      }
+    } catch (error) {
+      toast.error(error.message)
+    } finally {
+      setIsTriaging(false)
+    }
+  }
 
   const { workspaceSlug, projectKey } = useParams()
   const { workspaces } = useWorkspaces()
@@ -92,6 +133,10 @@ export default function CreateIssueModal({ projectId, columnId, onClose }) {
         onSuccess: () => {
           onClose()
         },
+        onError: (err) => {
+          console.error("Failed to create issue:", err)
+          toast.error("Failed to create issue: " + (err.message || err.toString()))
+        }
       }
     )
   }
@@ -125,9 +170,20 @@ export default function CreateIssueModal({ projectId, columnId, onClose }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-(--color-text-secondary) mb-1.5">
-              Description (Optional)
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-(--color-text-secondary)">
+                Description (Optional)
+              </label>
+              <button
+                type="button"
+                onClick={handleDraftAI}
+                disabled={isDrafting || !title.trim()}
+                className="flex items-center gap-1.5 text-xs font-medium text-purple-500 hover:text-purple-400 disabled:opacity-50 transition-colors"
+              >
+                {isDrafting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                Draft with AI
+              </button>
+            </div>
             <textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
@@ -138,9 +194,20 @@ export default function CreateIssueModal({ projectId, columnId, onClose }) {
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-(--color-text-secondary) mb-1.5">
-              Priority
-            </label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-sm font-medium text-(--color-text-secondary)">
+                Priority
+              </label>
+              <button
+                type="button"
+                onClick={handleTriageAI}
+                disabled={isTriaging || !title.trim()}
+                className="flex items-center gap-1.5 text-xs font-medium text-purple-500 hover:text-purple-400 disabled:opacity-50 transition-colors"
+              >
+                {isTriaging ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                Auto Triage
+              </button>
+            </div>
             <select
               value={priority}
               onChange={(e) => setPriority(e.target.value)}

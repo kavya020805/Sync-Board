@@ -4,8 +4,9 @@ import { useUpdateIssue } from '@/hooks/useBoard'
 import { useMilestones } from '@/hooks/useSprints'
 import IssueActivityFeed from './IssueActivityFeed'
 import IssueComments from './IssueComments'
-import { Activity, MessageSquare, Info, GitPullRequest, Loader2 } from 'lucide-react'
+import { Activity, MessageSquare, Info, GitPullRequest, Loader2, Sparkles } from 'lucide-react'
 import { usePullRequests } from '@/hooks/usePullRequests'
+import { generateIssueDraft, triageIssue, suggestSubtasks } from '@/lib/gemini'
 
 import { useParams } from 'react-router-dom'
 import { useWorkspaces } from '@/hooks/useWorkspaces'
@@ -31,6 +32,55 @@ export default function EditIssueModal({ issue, onClose }) {
   const [startDate, setStartDate] = useState('')
   const [dueDate, setDueDate] = useState('')
   const [activeTab, setActiveTab] = useState('details')
+
+  const [isDrafting, setIsDrafting] = useState(false)
+  const [isTriaging, setIsTriaging] = useState(false)
+  const [isSuggestingSubtasks, setIsSuggestingSubtasks] = useState(false)
+
+  const handleDraftAI = async () => {
+    if (!title.trim()) return toast.error('Please enter a title first.')
+    setIsDrafting(true)
+    try {
+      const draft = await generateIssueDraft(title)
+      setDescription(draft)
+      toast.success('AI Draft generated!')
+    } catch (e) {
+      toast.error(e.message)
+    } finally {
+      setIsDrafting(false)
+    }
+  }
+
+  const handleTriageAI = async () => {
+    if (!title.trim()) return toast.error('Please enter a title to triage.')
+    setIsTriaging(true)
+    try {
+      const result = await triageIssue(title, description)
+      if (result.priority) {
+        setPriority(result.priority)
+        toast.success(`Priority set to ${result.priority}`)
+      }
+    } catch (e) {
+      toast.error(e.message)
+    } finally {
+      setIsTriaging(false)
+    }
+  }
+
+  const handleSuggestSubtasks = async () => {
+    if (!description.trim()) return toast.error('Please add a description first so AI understands the context.')
+    setIsSuggestingSubtasks(true)
+    try {
+      const subtasks = await suggestSubtasks(description)
+      const checklist = '\n\n### AI Suggested Subtasks:\n' + subtasks.map(s => `- [ ] ${s}`).join('\n')
+      setDescription(prev => prev + checklist)
+      toast.success('Subtasks appended to description!')
+    } catch (e) {
+      toast.error(e.message)
+    } finally {
+      setIsSuggestingSubtasks(false)
+    }
+  }
 
   const { data: milestones } = useMilestones(issue?.project_id)
   const { data: epics } = useEpics(issue?.project_id)
@@ -217,9 +267,31 @@ export default function EditIssueModal({ issue, onClose }) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-(--color-text-secondary) mb-1.5">
-                  Description (Optional)
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-sm font-medium text-(--color-text-secondary)">
+                    Description (Optional)
+                  </label>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleDraftAI}
+                      disabled={isDrafting || !title.trim()}
+                      className="flex items-center gap-1.5 text-xs font-medium text-purple-500 hover:text-purple-400 disabled:opacity-50 transition-colors"
+                    >
+                      {isDrafting ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                      Draft with AI
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleSuggestSubtasks}
+                      disabled={isSuggestingSubtasks || !description.trim()}
+                      className="flex items-center gap-1.5 text-xs font-medium text-emerald-500 hover:text-emerald-400 disabled:opacity-50 transition-colors"
+                    >
+                      {isSuggestingSubtasks ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                      Suggest Subtasks
+                    </button>
+                  </div>
+                </div>
                 <textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
@@ -230,9 +302,20 @@ export default function EditIssueModal({ issue, onClose }) {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-(--color-text-secondary) mb-1.5">
-                  Priority
-                </label>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label className="block text-sm font-medium text-(--color-text-secondary)">
+                    Priority
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleTriageAI}
+                    disabled={isTriaging || !title.trim()}
+                    className="flex items-center gap-1.5 text-xs font-medium text-purple-500 hover:text-purple-400 disabled:opacity-50 transition-colors"
+                  >
+                    {isTriaging ? <Loader2 className="w-3 h-3 animate-spin" /> : <Sparkles className="w-3 h-3" />}
+                    Auto Triage
+                  </button>
+                </div>
                 <select
                   value={priority}
                   onChange={(e) => setPriority(e.target.value)}

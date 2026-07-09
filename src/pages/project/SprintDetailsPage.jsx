@@ -1,6 +1,6 @@
-import React, { useMemo } from 'react'
+import React, { useMemo, useState } from 'react'
 import { useParams } from 'react-router-dom'
-import { Loader2, Info } from 'lucide-react'
+import { Loader2, Info, Sparkles } from 'lucide-react'
 import {
   LineChart,
   Line,
@@ -18,6 +18,9 @@ import { useWorkspaces } from '@/hooks/useWorkspaces'
 import { useProject } from '@/hooks/useProjects'
 import { useSprints } from '@/hooks/useSprints'
 import { useIssues, useColumns } from '@/hooks/useBoard'
+import { generateSprintSummary } from '@/lib/gemini'
+import ReactMarkdown from 'react-markdown'
+import { toast } from 'sonner'
 
 export default function SprintDetailsPage() {
   const { workspaceSlug, projectKey } = useParams()
@@ -31,6 +34,25 @@ export default function SprintDetailsPage() {
   const { data: columns, isLoading: columnsLoading } = useColumns(project?.id)
 
   const isLoading = projectLoading || sprintsLoading || issuesLoading || columnsLoading
+
+  const [aiSummary, setAiSummary] = useState('')
+  const [isGenerating, setIsGenerating] = useState(false)
+
+  const handleGenerateSummary = async () => {
+    setIsGenerating(true)
+    try {
+      const activeSprint = sprints?.find(s => s.status === 'active') || sprints?.[sprints.length - 1]
+      const sprintIssues = issues?.filter(i => i.sprint_id === activeSprint?.id) || []
+      
+      const summary = await generateSprintSummary(sprintIssues)
+      setAiSummary(summary)
+      toast.success('Sprint Summary Generated!')
+    } catch (e) {
+      toast.error(e.message)
+    } finally {
+      setIsGenerating(false)
+    }
+  }
 
   // Calculate chart data
   const { burndownData, velocityData } = useMemo(() => {
@@ -185,6 +207,36 @@ export default function SprintDetailsPage() {
             )}
           </div>
         </div>
+      </div>
+
+      {/* AI Sprint Summary */}
+      <div className="mt-8 bg-(--color-bg-secondary) border border-(--color-border-default) rounded-xl p-6 shadow-sm overflow-hidden relative">
+        {/* Animated gradient background border effect */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-500/10 via-transparent to-blue-500/10 pointer-events-none" />
+        
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 relative z-10">
+          <div>
+            <h3 className="text-lg font-bold text-(--color-text-primary) flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-purple-500" />
+              AI Sprint Summary
+            </h3>
+            <p className="text-sm text-(--color-text-secondary) mt-1">Automatically generate a progress report for the current sprint.</p>
+          </div>
+          <button
+            onClick={handleGenerateSummary}
+            disabled={isGenerating || !issues?.length}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 text-white font-medium rounded-lg transition-all shadow-md hover:shadow-lg disabled:opacity-50 cursor-pointer"
+          >
+            {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+            {isGenerating ? 'Analyzing...' : 'Generate Summary'}
+          </button>
+        </div>
+
+        {aiSummary && (
+          <div className="relative z-10 prose prose-sm prose-invert max-w-none bg-(--color-bg-elevated) p-6 rounded-lg border border-(--color-border-subtle) animate-fade-in shadow-inner text-(--color-text-primary)">
+             <ReactMarkdown>{aiSummary}</ReactMarkdown>
+          </div>
+        )}
       </div>
     </div>
   )

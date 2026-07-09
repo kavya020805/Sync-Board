@@ -128,13 +128,20 @@ export default function ProjectTimelinePage() {
                       
                       {/* Gantt Bar */}
                       <div className="absolute h-full flex items-center py-2 px-1" style={{ left: `${leftPos}px`, width: `${width}px` }}>
-                        <div className="w-full h-8 bg-(--color-accent) hover:bg-(--color-accent-hover) rounded-md shadow-sm border border-[rgba(255,255,255,0.1)] flex items-center px-2 cursor-pointer transition-colors relative overflow-hidden group-hover:ring-2 ring-(--color-accent) ring-offset-1 ring-offset-(--color-bg-secondary)">
+                        <div className="w-full h-8 bg-(--color-accent) hover:bg-(--color-accent-hover) rounded-md shadow-sm border border-[rgba(255,255,255,0.1)] flex items-center cursor-pointer transition-colors relative overflow-hidden group-hover:ring-2 ring-(--color-accent) ring-offset-1 ring-offset-(--color-bg-secondary)">
                            {/* Micro-animation gradient overlay */}
                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full animate-[shimmer_2s_infinite]" />
-                           <span className="text-[10px] font-bold text-white truncate drop-shadow-md z-10 relative">
-                             {format(issueStart, 'MMM d')} - {format(issueEnd, 'MMM d')}
-                           </span>
+                           {durationDays >= 3 && (
+                             <span className="text-[10px] font-bold text-white truncate drop-shadow-md z-10 relative px-2 pointer-events-none">
+                               {format(issueStart, 'MMM d')} - {format(issueEnd, 'MMM d')}
+                             </span>
+                           )}
                         </div>
+                        {durationDays < 3 && (
+                          <span className="absolute left-full ml-2 text-[10px] font-bold text-(--color-text-secondary) whitespace-nowrap z-10 pointer-events-none group-hover:text-(--color-text-primary) transition-colors">
+                            {format(issueStart, 'MMM d')} {durationDays > 1 ? `- ${format(issueEnd, 'MMM d')}` : ''}
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
