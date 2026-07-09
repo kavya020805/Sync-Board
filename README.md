@@ -1,9 +1,9 @@
 <p align="center">
   <h1 align="center">🔄 Sync Board</h1>
   <p align="center">
-    A real-time collaborative project management tool for small dev teams.
+    A real-time, AI-powered collaborative project management platform.
     <br />
-    Lightweight alternative to Jira & Linear — powered entirely by Supabase.
+    Designed for high-velocity software teams, powered by Supabase and Gemini AI.
   </p>
 </p>
 
@@ -11,79 +11,63 @@
 
 ## Overview
 
-Sync Board is a full-stack team project management web application built for small development teams who need a clean, fast, and collaborative tool to manage their work — without the bloat of enterprise software.
+Sync Board is a full-stack, multi-tenant team project management web application built for development teams who need a fast, intelligent, and collaborative tool to manage their agile workflows. 
 
-At its core, Sync Board provides a **real-time kanban board** where issues can be dragged between columns and every connected teammate sees the change instantly. No refreshing, no polling — powered entirely by **Supabase Realtime**. There is no separate backend server — the entire backend runs on Supabase (PostgreSQL, Auth, Realtime, Storage), with the only server-side code being a single Supabase Edge Function for GitHub webhook verification.
-
----
-
-## Features
-
-### 🗂️ Workspaces & Teams
-- Create workspaces to organize projects
-- Invite members by email with role-based access: **Owner**, **Admin**, **Member**
-- Row Level Security (RLS) enforced at the database level
-
-### 📋 Kanban Board
-- Drag-and-drop issues between customizable columns
-- Real-time sync across all connected clients via Supabase Realtime
-- Float midpoint ordering — reordering requires only a single DB write
-- WIP (Work In Progress) limits with visual warnings
-
-### 📝 Issues
-- Title, Markdown description, priority level, story points, due date
-- Colour-coded labels and multiple assignees
-- Overdue issues auto-highlighted with a red border
-- Linked GitHub PRs shown as status badges (open / merged / closed)
-
-### 🏃 Sprint Planning
-- Time-boxed sprints with name, goal, and start/end dates
-- Pull issues from backlog into active sprints
-- **Burndown chart** — remaining story points vs ideal completion line
-- **Velocity chart** — story points completed across the last 6 sprints
-
-### 🎯 Milestones
-- Group issues under larger goals (product launch, version release)
-- Track progress across multiple sprints
-
-### 💬 Activity & Comments
-- Activity feed logging every status change, assignee update, priority change, and linked PR
-- Threaded comments with full Markdown support
-- `@mention` autocomplete — triggers instant notifications
-
-### 🔔 Notifications
-- Real-time notification inbox with unread count badge
-- Click to jump directly to the relevant issue
-
-### 🔗 GitHub Integration
-- Link a GitHub repo to a project via OAuth App
-- PRs matching `sb-<issue_number>` or containing `#<issue_number>` auto-link to issues
-- PR status badges update in real time via webhook (HMAC-SHA256 verified)
-
-### 📊 Dashboards & Analytics
-- **Project Dashboard** — issues by status, sprint progress, recent activity, overdue issues
-- **Workspace Analytics** — issues created/closed, team velocity, priority distribution
-
-### ⚡ Productivity
-- `Ctrl+K` command palette — search issues, jump to boards, create issues
-- `?` keyboard shortcut reference overlay
-- Live presence avatars on the board
-- Dark mode (persists across sessions)
+At its core, Sync Board provides a **WebSocket-driven real-time Kanban board**, interactive Gantt charts, and deep hierarchical workflows (Epics & Subtasks). It leverages a custom **Automations Rules Engine** to programmatically trigger state changes based on external events (like GitHub PR merges). To eliminate manual overhead, Sync Board deeply integrates **Gemini AI** to auto-triage incoming issues, generate comprehensive task drafts, and predictively break down complex epics into actionable subtasks.
 
 ---
 
-## Tech Stack
+## 🌟 Key Features
+
+### 🤖 Gemini AI Integrations
+- **Magic Draft:** AI-generates comprehensive, well-structured issue descriptions and acceptance criteria from a simple title.
+- **Smart Breakdown:** AI predictively analyzes Epics and automatically generates a checklist of actionable subtasks.
+- **Auto Triage:** AI reads incoming issue descriptions and automatically assigns the correct severity/priority level.
+- **Sprint Summaries:** AI generates human-readable sprint velocity reports and progress summaries based on closed/open issues.
+
+### ⚙️ Automations Rules Engine
+- Custom serverless rules engine powered by Supabase Edge Functions.
+- Triggers autonomous workflow transitions based on GitHub webhook events.
+- Dynamically moves issues across Kanban columns (e.g., auto-closing issues when a PR is merged).
+
+### 📋 Real-Time Kanban & Workflows
+- WebSocket-driven synchronization across all connected clients.
+- Fully customizable workflow columns per project.
+- Deep hierarchical structure linking **Epics**, **Issues**, and **Subtasks**.
+- Float midpoint ordering ensures drag-and-drop reordering requires only a single DB write.
+
+### 📅 Gantt Timelines & Sprints
+- Interactive Gantt chart timeline for visually scheduling Epics and Issues.
+- Time-boxed sprints with dynamic velocity tracking and burndown charts.
+- Overdue tasks are automatically highlighted with visual indicators.
+
+### 🗂️ Multi-Tenant Security & RBAC
+- Dedicated Workspaces for isolating different organizations or teams.
+- Role-based access control (Owner, Admin, Member).
+- Strict data isolation enforced natively at the database level via **PostgreSQL Row-Level Security (RLS)**.
+
+### 🔗 Deep GitHub Integration
+- OAuth integration to link GitHub repositories directly to projects.
+- Pull Requests containing issue IDs (`sb-<id>`) are automatically linked.
+- Live PR status badges (Open / Merged / Closed) update instantly on the board.
+
+### ⚡ Productivity & UX
+- `Ctrl+K` command palette for lightning-fast global search and navigation.
+- Live user presence avatars (see who is actively viewing the board).
+- Threaded Markdown comments with `@mention` autocomplete and in-app notifications.
+
+---
+
+## 🛠️ Tech Stack
 
 | Layer | Technology |
 |---|---|
 | **Frontend** | React, Vite, Tailwind CSS, shadcn/ui |
-| **State & Data** | TanStack Query (React Query) |
-| **Drag & Drop** | dnd-kit |
-| **Markdown** | react-markdown + remark-gfm |
-| **Charts** | Recharts |
+| **Artificial Intelligence** | Google Gemini API (2.5 Flash) |
+| **State Management** | Zustand, TanStack Query (React Query) |
+| **Interactions** | dnd-kit (Drag & Drop), Recharts (Analytics) |
 | **Database** | Supabase (PostgreSQL) |
-| **Auth** | Supabase Auth |
-| **Realtime** | Supabase Realtime (Postgres Changes + Presence) |
-| **Storage** | Supabase Storage |
-| **Edge Functions** | Supabase Edge Functions (Deno) |
-| **Deployment** | Vercel (frontend) + Supabase (backend) |
+| **Security** | Supabase Auth, Row-Level Security (RLS) |
+| **Realtime** | Supabase Realtime (WebSockets + Presence) |
+| **Serverless** | Supabase Edge Functions (Deno) |
+| **Deployment** | Vercel (Frontend) + Supabase (Backend) |
